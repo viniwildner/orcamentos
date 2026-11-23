@@ -287,8 +287,9 @@ main{min-width:0;max-width:1040px;padding-bottom:96px}
 .assin .linhas-a{display:grid;grid-template-columns:1fr 1fr;gap:24px}
 .assin .linhas-a div{border-top:1px solid var(--borda);padding-top:8px;font-size:13px;color:var(--texto-suave)}
 .contato{margin-top:28px;display:flex;flex-wrap:wrap;gap:12px 28px;color:var(--texto-secundario);font-size:14.5px}
-.contato a{display:inline-flex;gap:8px;align-items:center;color:inherit;text-decoration:none;border-bottom:1px solid transparent;transition:color .15s,border-color .15s}
-.contato a:hover{color:var(--destaque);border-bottom-color:currentColor}
+.contato a{display:inline-flex;gap:10px;align-items:center;line-height:1.2;color:inherit;text-decoration:none;transition:color .15s}
+.contato a svg{flex:none;width:18px;height:18px;display:block}
+.contato a:hover{color:var(--destaque);text-decoration:underline;text-underline-offset:3px}
 .rodape{padding-block:32px;display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center;color:var(--texto-suave);font-size:13px;border-top:1px solid var(--borda-sutil)}
 .rodape img{height:18px;width:auto;opacity:.8}
 

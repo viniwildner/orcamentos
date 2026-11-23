@@ -481,7 +481,7 @@
     const base = location.href.replace(/[#?].*$/, '').replace(/[^/]*$/, '');
     return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><base href="${base}"><meta name="viewport" content="width=device-width,initial-scale=1">
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Playfair+Display:wght@900&display=swap">
-      <link rel="stylesheet" href="assets/proposta.css"><style>html{scroll-behavior:auto}</style></head><body><div id="app"></div></body></html>`;
+      <link rel="stylesheet" href="assets/proposta.css?v=${(document.querySelector('link[href*="admin.css"]').getAttribute('href').split('?v=')[1] || Date.now())}"><style>html{scroll-behavior:auto}</style></head><body><div id="app"></div></body></html>`;
   }
   function montarPreview() {
     const f = $('#frame');
