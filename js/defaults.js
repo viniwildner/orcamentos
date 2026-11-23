@@ -17,7 +17,7 @@ WD.CONFIG_PADRAO = {
     telefoneExibicao: '(51) 98019-9884',
     email: 'contato@wildnerdesign.com.br',
     site: 'wildnerdesign.com.br',
-    cidade: 'Imbituba',
+    cidade: 'Porto Alegre/RS',
     cnpj: '38.097.297/0001-28',
     sobre: 'A Wildner Design é uma agência de design digital. Criamos websites, identidades visuais, chatbots e peças gráficas para empresas que querem crescer com uma presença digital de verdade.',
     clientes: '+120',
