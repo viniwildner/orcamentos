@@ -245,9 +245,9 @@ window.WD = window.WD || {};
             <li><span><b>Reunião de imersão</b>Em até 3 dias úteis marcamos a primeira conversa.</span></li>
           </ol>
           <div class="contato">
-            <span>${ic('whats')}${esc(E.telefoneExibicao)}</span>
-            <span>${ic('mail')}${esc(E.email)}</span>
-            <span>${ic('globe')}${esc(E.site)}</span>
+            ${E.telefoneExibicao ? `<a href="https://wa.me/${esc(String(E.whatsapp || '').replace(/\D/g, ''))}" target="_blank" rel="noopener">${ic('whats')}${esc(E.telefoneExibicao)}</a>` : ''}
+            ${E.email ? `<a href="mailto:${esc(E.email)}">${ic('mail')}${esc(E.email)}</a>` : ''}
+            ${E.site ? `<a href="${esc(/^https?:/.test(E.site) ? E.site : 'https://' + E.site)}" target="_blank" rel="noopener">${ic('globe')}${esc(E.site.replace(/^https?:\/\//, ''))}</a>` : ''}
           </div>
         </div>
         <div class="assin">
