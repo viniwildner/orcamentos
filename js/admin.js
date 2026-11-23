@@ -446,8 +446,19 @@
     const v = $('#ed-valor'); if (v) v.textContent = `${atual.numero || ''} · R$ ${brl(WD.calcular(atual, atual.escolha).final, false)}`;
     const cc = $('#comissao-calc');
     if (cc) {
-      const it = atual.interno || {}; const pct = Number(it.comissaoPct || 0); const base = WD.calcular(atual, atual.escolha).final;
-      cc.innerHTML = pct > 0 ? `<span>Comissão${it.comissaoPara ? ' para <b>' + esc(it.comissaoPara) + '</b>' : ''}</span><b class="num">R$ ${brl(base * pct / 100)}</b><span>${pct}% de R$ ${brl(base)} · fica para a Wildner <b class="num">R$ ${brl(base - base * pct / 100)}</b></span>` : '<span>Sem comissão neste orçamento.</span>';
+      const it = atual.interno || {}; const pct = Number(it.comissaoPct || 0);
+      if (!(pct > 0)) cc.innerHTML = '<span>Sem comissão neste orçamento.</span>';
+      else {
+        const c0 = WD.calcular(atual, atual.escolha);
+        const doCliente = !!(atual.escolha && atual.escolha.pagamento);
+        const linhas = c0.formas.map(k => {
+          const c = WD.calcular(atual, Object.assign({}, atual.escolha || {}, { pagamento: k }));
+          const com = c.final * pct / 100; const on = k === c0.forma;
+          return `<div class="com-l${on ? ' on' : ''}"><span>${esc(WD.NOMES_PAG[k])}${on ? (doCliente ? ' <em>escolha do cliente</em>' : ' <em>marcada na proposta</em>') : ''}</span><span class="num">R$ ${brl(c.final)}</span><b class="num">R$ ${brl(com)}</b><span class="num">R$ ${brl(c.final - com)}</span></div>`;
+        }).join('');
+        cc.innerHTML = `<p class="com-t">${pct}% de comissão${it.comissaoPara ? ' para <b>' + esc(it.comissaoPara) + '</b>' : ''}, calculada sobre o que o cliente paga em cada forma de pagamento (sem mensalidades).</p>
+          <div class="com-l com-h"><span>Forma</span><span>Cliente paga</span><span>Comissão</span><span>Fica para a Wildner</span></div>${linhas}`;
+      }
     }
   }
 

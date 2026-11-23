@@ -314,7 +314,15 @@ dialog::backdrop{background:rgba(0,0,0,.6)}
 @media (max-width:640px){.marca-topo .logo{height:16px}}
 
 /* Interno: comissão calculada */
-.comissao{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;padding:12px 14px;border:1px dashed var(--borda);border-radius:var(--raio);background:var(--superficie);font-size:13.5px;color:var(--texto-2)}
-.comissao>b{font-size:18px;color:var(--texto);font-weight:600}
+.comissao{display:block;padding:12px 14px;border:1px dashed var(--borda);border-radius:var(--raio);background:var(--superficie);font-size:13.5px;color:var(--texto-2)}
+.com-t{margin:0 0 8px;line-height:1.45}
+.com-l{display:grid;grid-template-columns:minmax(0,1.6fr) repeat(3,minmax(0,1fr));gap:8px;padding:7px 8px;border-radius:var(--raio);align-items:center}
+.com-l>span:not(:first-child),.com-l>b{text-align:right}
+.com-h{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--texto-3);padding-bottom:4px}
+.com-l.on{background:var(--fundo);outline:1px solid var(--borda)}
+.com-l em{font-style:normal;font-size:11.5px;color:var(--ok);margin-left:6px;white-space:nowrap}
+.com-l b{font-weight:600}
 .comissao b{color:var(--texto)}
 #sec-interno>summary .n{background:var(--coral-bg);color:var(--coral-texto)}
+/* Espaço na lateral esquerda do editor para o seletor Escuro/Claro flutuante */
+@media (min-width:861px){ .editor{padding-left:60px} }
