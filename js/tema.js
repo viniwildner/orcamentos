@@ -3,7 +3,7 @@
 (function () {
   var t = null;
   try { t = localStorage.getItem('wd-tema'); } catch (e) { /* navegador sem armazenamento */ }
-  document.documentElement.dataset.tema = t === 'claro' ? 'claro' : 'escuro';
+  document.documentElement.dataset.tema = t === 'escuro' ? 'escuro' : 'claro'; // padrão: claro
 })();
 
 window.WD = window.WD || {};
