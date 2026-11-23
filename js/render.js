@@ -81,6 +81,7 @@ window.WD = window.WD || {};
 
     add('capa', 'Apresentação', `
     <section class="folha capa" id="capa">
+      <img class="so-print logo-print" src="${opts.base || ''}img/logo-branco.png" alt="${esc(E.nome)}">
       <div>
         <p class="rotulo">Proposta de website</p>
         <h1>${titulo(o)}</h1>

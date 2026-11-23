@@ -290,16 +290,25 @@ main{min-width:0;max-width:1040px;padding-bottom:96px}
 
 /* Impressão / PDF (A4) */
 @page{size:A4;margin:0}
+/* Logo no topo da capa, só no PDF */
+.so-print{display:none}
 @media print{
+  .so-print{display:block}
+  .capa{position:relative}
+  .logo-print{position:absolute;top:14mm;left:0;height:28px;width:auto}
+  .capa>.palco{grid-column:2}
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   html,body{background:var(--fundo)}
   .topo,.indice,.so-tela{display:none!important}
   .casca{display:block;padding:0 14mm;max-width:none}
   main{max-width:none;padding:0}
-  .folha{break-before:page;padding-block:16mm 10mm;border:0}
-  .folha:first-child{break-before:auto}
+  .folha{break-before:auto;padding-block:14mm 8mm;border:0}
+  #resumo,#sobre,#portfolio,#escopo,#processo,#investimento,#incluso,#condicoes{break-before:page}
+  .aceite,.cab{break-inside:avoid}
+  .cab{break-after:avoid}
   body{zoom:.74}
-  .capa{min-height:362mm}
+  .capa{min-height:392mm}
+  .capa h1{font-size:76px}
   .card,.kpi,.pag,.func,.dif,.proj,.opcao,.quote,.marco,.mapa,.gantt,details{break-inside:avoid}
   .conds details>p{display:block}
   .conds summary svg{display:none}

@@ -258,6 +258,17 @@
   }
 
   /* ---------- Lista ---------- */
+  function saudacao() { const h = new Date().getHours(); return h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite'; }
+  function iniciais(n) { const p = String(n || '?').replace(/\(.*?\)/g, '').trim().split(/\s+/).filter(w => w.length > 2 || /^[A-ZÀ-Ú]/.test(w)); return ((p[0] || '?')[0] + ((p[1] || '')[0] || '')).toUpperCase(); }
+  function quando(iso) {
+    if (!iso) return '';
+    const d = new Date(iso); const min = Math.round((Date.now() - d) / 60000);
+    if (min < 1) return 'agora';
+    if (min < 60) return `há ${min} min`;
+    if (min < 60 * 24) return `há ${Math.round(min / 60)} h`;
+    if (min < 60 * 24 * 7) { const dd = Math.round(min / 1440); return dd === 1 ? 'ontem' : `há ${dd} dias`; }
+    return fmtData(d.toISOString().slice(0, 10));
+  }
   let filtro = 'todos', busca = '';
   async function telaLista() {
     marcarNav('lista');
@@ -268,17 +279,25 @@
     const abertos = lista.filter(x => x.status === 'enviado' || x.status === 'visualizado');
     const aprov = lista.filter(x => x.status === 'aprovado');
     const decididos = lista.filter(x => x.status === 'aprovado' || x.status === 'recusado').length;
+    const taxa = decididos ? Math.round(aprov.length / decididos * 100) + '%' : '—';
+    const funil = ['enviado', 'visualizado', 'aprovado', 'recusado'].map(s => [s, soma(lista.filter(x => x.status === s))]);
+    const totalFunil = funil.reduce((n, [, v]) => n + v, 0);
+    const conta = s => s === 'todos' ? lista.length : lista.filter(x => x.status === s).length;
     tela.innerHTML = `<div class="pagina">
-      ${WD.store.modo === 'local' ? `<div class="aviso-local">${ic('monitor')}<div><b>Modo local.</b> Os orçamentos ficam só neste navegador e o link para o cliente não funciona em outro aparelho. Para isso, conecte o Supabase (veja o README). Enquanto isso, envie o PDF.</div></div>` : ''}
-      <div class="cab-pag"><div><h1>Orçamentos</h1><p>${lista.length} ${lista.length === 1 ? 'proposta' : 'propostas'} no total.</p></div>
+      <div class="cab-pag"><div><p class="sobretitulo">${saudacao()}, ${esc((cfg.empresa.responsavel || '').split(' ')[0] || 'Marcus')}</p><h1>Orçamentos</h1></div>
         <div class="acoes"><button class="btn btn--p" id="novo">${ic('plus')}Novo orçamento</button></div></div>
-      <div class="kpis">
-        <div class="kpi"><span>Em aberto</span><b>${abertos.length}</b><small>R$ ${brl(soma(abertos), false)}</small></div>
-        <div class="kpi kpi--verde"><span>Aprovados</span><b>${aprov.length}</b><small>R$ ${brl(soma(aprov), false)}</small></div>
-        <div class="kpi"><span>Taxa de aprovação</span><b>${decididos ? Math.round(aprov.length / decididos * 100) + '%' : '—'}</b><small>entre aprovados e recusados</small></div>
-        <div class="kpi"><span>Rascunhos</span><b>${lista.filter(x => x.status === 'rascunho').length}</b><small>ainda não enviados</small></div>
-      </div>
-      <div class="filtros">${['todos', ...Object.keys(STATUS)].map(s => `<button class="chip${filtro === s ? ' on' : ''}" data-filtro="${s}">${s === 'todos' ? 'Todos' : STATUS[s]}</button>`).join('')}
+      ${WD.store.modo === 'local' ? `<p class="aviso-local"><span class="ponto"></span><span><b>Modo local.</b> Os dados ficam só neste navegador e o link do cliente não abre em outro aparelho. Conecte o Supabase para enviar links.</span></p>` : ''}
+      <section class="painel-num" aria-label="Resumo">
+        <div class="nums">
+          <div class="met"><span>Em negociação</span><b class="num">R$ ${brl(soma(abertos), false)}</b><small>${abertos.length} ${abertos.length === 1 ? 'proposta enviada' : 'propostas enviadas'}</small></div>
+          <div class="met met--verde"><span>Aprovado</span><b class="num">R$ ${brl(soma(aprov), false)}</b><small>${aprov.length} ${aprov.length === 1 ? 'proposta' : 'propostas'}</small></div>
+          <div class="met"><span>Taxa de aprovação</span><b class="num">${taxa}</b><small>entre aprovadas e recusadas</small></div>
+          <div class="met"><span>Rascunhos</span><b class="num">${conta('rascunho')}</b><small>ainda não enviados</small></div>
+        </div>
+        ${totalFunil ? `<div class="funil" role="img" aria-label="Valor por status">${funil.filter(([, v]) => v).map(([s, v]) => `<i class="f--${s}" style="flex:${v}" title="${STATUS[s]}: R$ ${brl(v, false)}"></i>`).join('')}</div>
+        <ul class="legenda">${funil.filter(([, v]) => v).map(([s, v]) => `<li><i class="f--${s}"></i>${STATUS[s]} <b class="num">R$ ${brl(v, false)}</b></li>`).join('')}</ul>` : ''}
+      </section>
+      <div class="filtros">${['todos', ...Object.keys(STATUS)].map(s => `<button class="chip${filtro === s ? ' on' : ''}" data-filtro="${s}">${s === 'todos' ? 'Todos' : STATUS[s]}<span class="num">${conta(s)}</span></button>`).join('')}
         <input class="busca" type="search" placeholder="Buscar cliente ou número" value="${esc(busca)}" id="busca"></div>
       <div class="lista" id="lista"></div>
       <p style="margin-top:24px;font-size:13px;color:var(--texto-3)">Orçamentos do sistema anterior: <a href="antigo.html">abrir sistema antigo</a>.</p></div>`;
@@ -294,14 +313,14 @@
     const el = $('#lista');
     if (!lista.length) { el.innerHTML = `<div class="vazio"><h2>Nenhum orçamento ainda</h2><p>Crie o primeiro. Ele já vem preenchido com os seus padrões.</p><p style="margin-top:16px"><button class="btn btn--p" onclick="document.getElementById('novo').click()">${ic('plus')}Novo orçamento</button></p></div>`; return; }
     if (!itens.length) { el.innerHTML = `<div class="vazio">Nada encontrado com esse filtro.</div>`; return; }
-    el.innerHTML = `<div class="linha-o cab"><span>Nº</span><span>Cliente</span><span>Valor</span><span>Status</span><span class="col-data">Atualizado</span><span></span></div>` +
+    el.innerHTML = `<div class="linha-o cab"><span>Cliente</span><span class="col-num">Nº</span><span class="col-status">Status</span><span class="col-data">Atualizado</span><span class="col-valor">Valor</span><span></span></div>` +
       itens.map(x => `<div class="linha-o" data-id="${x.id}" tabindex="0" role="button" aria-label="Abrir ${esc(x.cliente || 'orçamento')}">
+        <span class="cli"><i class="av" aria-hidden="true">${esc(iniciais(x.cliente))}</i><span><b>${esc(x.cliente || 'Sem nome')}</b><span>${esc(x.contato || 'Website')}</span></span></span>
         <span class="col-num num">${esc(x.numero || '—')}</span>
-        <span class="cli"><b>${esc(x.cliente || 'Sem nome')}</b><span>${esc(x.contato || 'Website')}</span></span>
-        <span class="col-valor num">R$ ${brl(x.valor, false)}</span>
         <span class="col-status"><span class="status status--${x.status}">${STATUS[x.status] || x.status}</span></span>
-        <span class="col-data num" style="color:var(--texto-3);font-size:13.5px">${fmtData(String(x.atualizado_em || '').slice(0, 10))}</span>
-        <span class="acts"><button class="icone-btn" title="Duplicar" data-dup="${x.id}">${ic('copy')}</button><button class="icone-btn perigo" title="Excluir" data-del="${x.id}">${ic('trash')}</button></span></div>`).join('');
+        <span class="col-data">${quando(x.atualizado_em)}</span>
+        <span class="col-valor num">R$ ${brl(x.valor, false)}</span>
+        <span class="acts"><button class="icone-btn" title="Duplicar" aria-label="Duplicar" data-dup="${x.id}">${ic('copy')}</button><button class="icone-btn perigo" title="Excluir" aria-label="Excluir" data-del="${x.id}">${ic('trash')}</button></span></div>`).join('');
     $$('.linha-o[data-id]', el).forEach(r => {
       r.onclick = e => { if (e.target.closest('button')) return; location.hash = '#/o/' + r.dataset.id; };
       r.onkeydown = e => { if (e.key === 'Enter') location.hash = '#/o/' + r.dataset.id; };
@@ -354,8 +373,8 @@
       <section class="form" aria-label="Formulário">
         <div class="form-topo">
           <a class="icone-btn" href="#/" title="Voltar">${ic('back')}</a>
-          <div class="tit"><b id="ed-tit"></b><span class="salvo" id="salvo">Salvo</span></div>
-          <select id="ed-status" title="Status">${Object.entries(STATUS).map(([k, n]) => `<option value="${k}"${atual.status === k ? ' selected' : ''}>${n}</option>`).join('')}</select>
+          <div class="tit"><b id="ed-tit"></b><span><span class="salvo" id="salvo">Salvo</span><span class="ed-valor num" id="ed-valor"></span></span></div>
+          <select id="ed-status" class="sel-status" data-s="${atual.status}" aria-label="Status">${Object.entries(STATUS).map(([k, n]) => `<option value="${k}"${atual.status === k ? ' selected' : ''}>${n}</option>`).join('')}</select>
           <button class="btn btn--sm btn--g alternar-prev" id="ver-prev">${ic('eye')}Ver</button>
           <button class="btn btn--sm btn--p" id="enviar">${ic('send')}Enviar</button>
         </div>
@@ -377,7 +396,7 @@
     desenhar();
     ligarForm($('#campos'), () => atual, secoes, mudou, desenhar);
     $('#campos').addEventListener('toggle', e => { const d = e.target; if (d.dataset && d.dataset.sec) { d.open ? abertasEd.add(d.dataset.sec) : abertasEd.delete(d.dataset.sec); if (d.open) irPara(d.dataset.sec); } }, true);
-    $('#ed-status').onchange = e => { atual.status = e.target.value; mudou(); };
+    $('#ed-status').onchange = e => { atual.status = e.target.value; e.target.dataset.s = atual.status; mudou(); };
     $('#enviar').onclick = abrirEnvio;
     $('#pdf').onclick = gerarPDF;
     $('#ver-prev').onclick = () => { $('#editor').classList.add('ver-prev'); $('#fechar-prev').hidden = false; escalar(); };
@@ -392,7 +411,10 @@
   const MAPA_SEC = { cliente: 'capa', capa: 'capa', objetivo: 'objetivo', escopo: 'escopo', etapas: 'processo', valores: 'investimento', incluso: 'incluso', prova: 'portfolio', condicoes: 'condicoes' };
   function irPara(sec) { const f = $('#frame'); const d = f && f.contentDocument; const alvo = d && d.getElementById(MAPA_SEC[sec]); if (alvo) d.defaultView.scrollTo({ top: alvo.offsetTop - 70, behavior: 'smooth' }); }
 
-  function titulo() { const t = $('#ed-tit'); if (t) t.textContent = `${atual.numero || ''} · ${atual.cliente.empresa || 'Novo orçamento'}`; }
+  function titulo() {
+    const t = $('#ed-tit'); if (t) t.textContent = atual.cliente.empresa || 'Novo orçamento';
+    const v = $('#ed-valor'); if (v) v.textContent = `${atual.numero || ''} · R$ ${brl(WD.calcular(atual, atual.escolha).final, false)}`;
+  }
 
   function mudou() {
     sujo = true; $('#salvo').textContent = 'Alterações não salvas';
@@ -449,7 +471,7 @@
     const m = cfg.mensagens || WD.CONFIG_PADRAO.mensagens;
     const local = WD.store.modo === 'local';
     dlg.innerHTML = `<div class="dlg"><h2>Enviar proposta</h2>
-      ${local ? `<div class="aviso-local" style="margin:0">${ic('monitor')}<div><b>Modo local:</b> o link só abre neste navegador. Envie o PDF até conectar o Supabase.</div></div>` : `<p>O cliente abre a proposta pelo link, escolhe a forma de pagamento e aprova. Você acompanha o status aqui.</p>`}
+      ${local ? `<p class="aviso-local" style="margin:0"><span class="ponto"></span><span><b>Modo local:</b> o link só abre neste navegador. Envie o PDF até conectar o Supabase.</span></p>` : `<p>O cliente abre a proposta pelo link, escolhe a forma de pagamento e aprova. Você acompanha o status aqui.</p>`}
       <div class="link"><input readonly value="${esc(linkCliente())}" id="env-link"><button class="btn btn--g" id="env-copiar">${ic('link')}Copiar</button></div>
       <div class="tabs seg"><button class="on" data-canal="whats">${ic('whats')}WhatsApp</button><button data-canal="email">${ic('mail')}E-mail</button></div>
       <div id="env-whats"><textarea id="env-msg">${esc(preencher(m.whatsapp))}</textarea><p class="dica" style="font-size:12.5px;color:var(--texto-3);margin-top:6px">${atual.cliente.whatsapp ? 'Vai para ' + esc(atual.cliente.whatsapp) : 'Sem WhatsApp do cliente: você escolhe o contato ao abrir.'}</p></div>
@@ -472,7 +494,7 @@
     };
   }
   async function marcarEnviado() {
-    if (atual.status === 'rascunho') { atual.status = 'enviado'; atual.enviadoEm = new Date().toISOString(); const s = $('#ed-status'); if (s) s.value = 'enviado'; sujo = true; await salvarAgora(); }
+    if (atual.status === 'rascunho') { atual.status = 'enviado'; atual.enviadoEm = new Date().toISOString(); const s = $('#ed-status'); if (s) { s.value = 'enviado'; s.dataset.s = 'enviado'; } sujo = true; await salvarAgora(); }
   }
 
   /* PDF: imprime a pré-visualização (Salvar como PDF, A4) */
