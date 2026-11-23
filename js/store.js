@@ -81,6 +81,13 @@ window.WD = window.WD || {};
     const cfg = Object.assign(base, salvo);
     cfg.empresa = Object.assign(clone(WD.CONFIG_PADRAO.empresa), salvo.empresa || {});
     cfg.pagamento = Object.assign(clone(WD.CONFIG_PADRAO.pagamento), salvo.pagamento || {});
+    // Configurações antigas: marcas eram só nomes; depoimentos não tinham foto.
+    const padraoM = WD.CONFIG_PADRAO.empresa.marcas;
+    if ((cfg.empresa.marcas || []).some(m => typeof m === 'string')) {
+      const nomes = cfg.empresa.marcas.map(m => typeof m === 'string' ? m : m.nome);
+      cfg.empresa.marcas = clone(padraoM).concat(nomes.filter(n => !padraoM.some(m => m.nome === n)).map(nome => ({ nome, logo: '' })));
+    }
+    (cfg.depoimentos || []).forEach(d => { const p = WD.CONFIG_PADRAO.depoimentos.find(x => x.id === d.id); if (p && d.foto === undefined) d.foto = p.foto; });
     return cfg;
   };
 

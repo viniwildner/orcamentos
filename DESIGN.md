@@ -54,7 +54,8 @@ Status no painel: rascunho cinza, enviado lilás `#8f8fe8`, visualizado branco, 
 
 - Duas versões: **colorido** (igual à tela, no modo escolhido) e **preto e branco** (fundo branco, sem fundos chapados, imagens em cinza, para imprimir).
 - Layout de computador reduzido (`zoom: .74`) para caber em A4 sem cair no layout de celular.
-- Capa sozinha com o logo no topo. Depois o conteúdo corre direto, sem página meio vazia; blocos não se partem e títulos não ficam sozinhos no pé da página.
+- Capa sozinha com o logo no topo e o mockup de celulares (`img/capa-celulares.webp`, trocável em Configurações → Empresa). No modo claro e no preto e branco o mockup fica num painel escuro de cantos arredondados.
+- Logo depois da capa vem **Quem somos**: título, texto, serviços, contadores, diferenciais e o mural de logos das marcas (logos em cinza escuro com fundo transparente; no modo escuro viram brancos por filtro). Depois o conteúdo corre direto, sem página meio vazia; blocos não se partem e títulos não ficam sozinhos no pé da página.
 - A cor do fundo da página, incluindo as margens, vem de `@page` e é ajustada pelo JS na hora de imprimir.
 - Todas as formas de pagamento e os opcionais aparecem, com a escolha atual destacada.
 

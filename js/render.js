@@ -92,7 +92,24 @@ window.WD = window.WD || {};
           <div><dt>Válida até</dt><dd class="num">${fmtData(validoAte)}</dd></div>
         </dl>
       </div>
-      ${mockupCapa()}
+      ${E.imagemCapa ? `<div class="palco palco--foto" aria-hidden="true"><img src="${esc(E.imagemCapa)}" alt=""></div>` : mockupCapa()}
+    </section>`);
+
+    const marcas = (E.marcas || []).map(m => typeof m === 'string' ? { nome: m, logo: '' } : m).filter(m => m && m.nome);
+    const tituloSobre = (() => { const t = esc(E.sobreTitulo || `Somos a ${E.nome}`); const n = esc(E.nome); return t.includes(n) ? t.replace(n, `<em>${n}</em>`) : t.replace(/(\S+)$/, '<em>$1</em>'); })();
+    add('sobre', 'Quem somos', `
+    <section class="folha" id="sobre">
+      <div class="sobre">
+        <div>
+          <p class="rotulo">Quem somos</p>
+          <h2 class="titulo">${tituloSobre}</h2>
+          <p class="lead">${esc(E.sobre)}</p>
+          ${(E.servicos || []).length ? `<ul class="servicos">${E.servicos.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
+          <div class="contadores"><div class="contador"><b class="num">${esc(E.clientes)}</b><span>Clientes<br>atendidos</span></div><div class="contador"><b class="num">${esc(E.anos)}</b><span>Anos de<br>experiência</span></div></div>
+        </div>
+        <div class="difs">${(cfg.diferenciais || []).map(d => `<div class="dif"><div class="ic">${ic(d.icone)}</div><div><h3>${esc(d.titulo)}</h3><p>${esc(d.texto)}</p></div></div>`).join('')}</div>
+      </div>
+      ${marcas.length ? `<div class="marcas"><p class="rotulo">Marcas que confiam na ${esc(E.nome)}</p><ul>${marcas.map(m => `<li title="${esc(m.nome)}">${m.logo ? `<img src="${esc(m.logo)}" alt="${esc(m.nome)}" loading="lazy">` : `<span>${esc(m.nome)}</span>`}</li>`).join('')}</ul></div>` : ''}
     </section>`);
 
     add('resumo', 'Resumo', `
@@ -110,20 +127,6 @@ window.WD = window.WD || {};
     <section class="folha" id="objetivo">
       <div class="cab"><p class="rotulo">O que entendemos</p><h2 class="titulo">Seu objetivo com o <em>novo site</em></h2>${o.contexto ? `<p class="lead">${esc(o.contexto)}</p>` : ''}</div>
       <div class="objetivos">${(o.objetivos || []).map(x => `<div class="obj">${ic(x.icone)}<h3>${esc(x.titulo)}</h3><p>${esc(x.texto)}</p></div>`).join('')}</div>
-    </section>`);
-
-    add('sobre', 'Quem somos', `
-    <section class="folha" id="sobre">
-      <div class="sobre">
-        <div>
-          <p class="rotulo">Quem somos</p>
-          <h2 class="titulo">Design, tecnologia e usabilidade <em>juntos</em></h2>
-          <p class="lead">${esc(E.sobre)}</p>
-          <div class="contadores"><div class="contador"><b class="num">${esc(E.clientes)}</b><span>Clientes<br>satisfeitos</span></div><div class="contador"><b class="num">${esc(E.anos)}</b><span>Anos de<br>experiência</span></div></div>
-          ${(E.marcas || []).length ? `<div class="marcas"><p>Marcas que confiam</p><ul>${E.marcas.map(m => `<li>${esc(m)}</li>`).join('')}</ul></div>` : ''}
-        </div>
-        <div class="difs">${(cfg.diferenciais || []).map(d => `<div class="dif"><div class="ic">${ic(d.icone)}</div><div><h3>${esc(d.titulo)}</h3><p>${esc(d.texto)}</p></div></div>`).join('')}</div>
-      </div>
     </section>`);
 
     if (port.length) add('portfolio', 'Projetos', `
@@ -206,7 +209,7 @@ window.WD = window.WD || {};
     if (deps.length) add('depoimentos', 'Depoimentos', `
     <section class="folha" id="depoimentos">
       <div class="cab"><p class="rotulo">Depoimentos</p><h2 class="titulo">O que falam sobre o <em>nosso trabalho</em></h2></div>
-      <div class="depo">${deps.map(d => `<figure class="card quote" style="margin:0"><blockquote>${esc(d.texto)}</blockquote><figcaption class="autor"><i>${esc(d.nome.split(' ').filter(Boolean).map(w => w[0]).slice(0, 1).join('') + (d.nome.split(' ').slice(-1)[0] || '')[0])}</i><div><b>${esc(d.nome)}</b><span>${esc(d.empresa)}</span></div></figcaption></figure>`).join('')}</div>
+      <div class="depo">${deps.map(d => `<figure class="card quote" style="margin:0"><blockquote>${esc(d.texto)}</blockquote><figcaption class="autor">${d.foto ? `<img src="${esc(d.foto)}" alt="" loading="lazy">` : `<i>${esc(d.nome.split(' ').filter(Boolean).map(w => w[0]).slice(0, 1).join('') + (d.nome.split(' ').slice(-1)[0] || '')[0])}</i>`}<div><b>${esc(d.nome)}</b><span>${esc(d.empresa)}</span></div></figcaption></figure>`).join('')}</div>
     </section>`);
 
     add('condicoes', 'Condições', `

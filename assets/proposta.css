@@ -139,9 +139,19 @@ main{min-width:0;max-width:1040px;padding-bottom:96px}
 .proj__foto{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1}
 .proj__link{font:600 14px/1.2 var(--sans);color:var(--destaque);text-decoration:none}
 .proj__link:hover{text-decoration:underline}
-.marcas{margin-top:28px;padding-top:20px;border-top:1px solid var(--borda-sutil)}
-.marcas p{margin:0 0 10px;font:500 12px/1.4 var(--sans);color:var(--texto-suave);text-transform:uppercase;letter-spacing:.06em}
-.marcas ul{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px 18px;color:var(--texto-secundario);font:600 14.5px/1.4 var(--sans)}
+.marcas{margin-top:56px;padding-top:32px;border-top:1px solid var(--borda-sutil)}
+.marcas .rotulo{margin:0 0 20px}
+.marcas ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px 24px}
+.marcas li{height:64px;display:flex;align-items:center;justify-content:center}
+.marcas img{max-width:100%;max-height:44px;width:auto;height:auto;filter:brightness(0) invert(1);opacity:.62}
+.marcas span{color:var(--texto-secundario);font:600 14px/1.3 var(--sans);text-align:center}
+:root[data-tema="claro"] .marcas img{filter:none;opacity:.9}
+:root[data-impressao="pb"] .marcas img{filter:grayscale(1);opacity:1}
+.servicos{list-style:none;margin:24px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.servicos li{padding:7px 14px;border:1px solid var(--borda);border-radius:999px;font:500 14px/1.2 var(--sans);color:var(--texto)}
+.palco--foto{aspect-ratio:auto;display:flex;justify-content:center}
+.palco--foto img{display:block;width:100%;max-width:520px;height:auto;-webkit-mask-image:radial-gradient(ellipse 72% 70% at 50% 50%,#000 62%,transparent 100%);mask-image:radial-gradient(ellipse 72% 70% at 50% 50%,#000 62%,transparent 100%)}
+:root[data-tema="claro"] .palco--foto img,:root[data-impressao="pb"] .palco--foto img{-webkit-mask-image:none;mask-image:none;border-radius:16px}
 .proj h3{margin:0;font:600 18px/1.3 var(--sans)}
 .proj p{margin:0;color:var(--texto-secundario);font-size:14.5px}
 .proj__meta{display:flex;gap:8px;flex-wrap:wrap}
@@ -244,6 +254,7 @@ main{min-width:0;max-width:1040px;padding-bottom:96px}
 .quote blockquote::before{content:"\201C";display:block;font:900 56px/0.6 var(--display);color:var(--destaque);margin-bottom:12px}
 .autor{display:flex;gap:12px;align-items:center;margin-top:auto}
 .autor i{width:40px;height:40px;border-radius:50%;background:var(--superficie-elevada);display:grid;place-items:center;font:600 14px/1 var(--sans);font-style:normal}
+.autor img{width:44px;height:44px;border-radius:50%;object-fit:cover;flex:none}
 .autor b{display:block;font:600 15px/1.3 var(--sans)}
 .autor span{color:var(--texto-suave);font-size:13.5px}
 
@@ -285,6 +296,7 @@ main{min-width:0;max-width:1040px;padding-bottom:96px}
   .paginas,.inc,.depo{grid-template-columns:minmax(0,1fr)}
   .folha{padding-block:64px}
   .palco{max-width:520px}
+  .marcas ul{grid-template-columns:repeat(4,minmax(0,1fr))}
 }
 @media screen and (max-width:560px){
   .topo__meta{display:none}
@@ -292,6 +304,7 @@ main{min-width:0;max-width:1040px;padding-bottom:96px}
   .ficha{grid-template-columns:minmax(0,1fr) minmax(0,1fr);row-gap:16px}
   .ficha div:nth-child(3){border-left:0;padding-left:0}
   .contadores{gap:28px}
+  .marcas ul{grid-template-columns:repeat(3,minmax(0,1fr));gap:4px 16px}
   .kpi{padding:18px}
   .assin .linhas-a{grid-template-columns:1fr}
 }
@@ -315,8 +328,10 @@ main{min-width:0;max-width:1040px;padding-bottom:96px}
   .folha{padding-block:0 18mm;border:0;break-before:auto}
   .folha+.folha{padding-top:0}
   .capa{position:relative;min-height:365mm;padding:0;align-content:center;break-after:page}
+  .capa{grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:24px}
   .capa>.palco{grid-column:2}
-  .capa h1{font-size:76px}
+  .capa h1{font-size:68px}
+  .palco--foto img{max-width:none}
   .logo-print{position:absolute;top:0;left:0}
   .logo-print .logo{height:30px;width:auto}
   .cab{break-inside:avoid;break-after:avoid;margin-bottom:28px}

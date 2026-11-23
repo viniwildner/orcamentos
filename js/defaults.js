@@ -22,7 +22,35 @@ WD.CONFIG_PADRAO = {
     sobre: 'A Wildner Design é uma agência de design digital. Criamos websites, identidades visuais, chatbots e peças gráficas para empresas que querem crescer com uma presença digital de verdade.',
     clientes: '+120',
     anos: '10',
-    marcas: ['CRON', 'Plastrela', 'Ledur', 'Imobiliária Joner', 'Thomas Representações', 'Viabile Engenharia', 'Vovô Garoto', 'Guillante Arquitetura', 'Agrotemp']
+    sobreTitulo: 'Somos a Wildner Design',
+    servicos: ['Websites', 'Identidade visual', 'Chatbots', 'Design gráfico'],
+    imagemCapa: 'img/capa-celulares.webp',
+    marcas: [
+      { nome: 'Sicredi', logo: 'img/marcas/sicredi-2.webp' },
+      { nome: 'CRON', logo: 'img/marcas/cron-1.webp' },
+      { nome: 'Plastrela', logo: 'img/marcas/plastrela.webp' },
+      { nome: 'Imobiliária Joner', logo: 'img/marcas/imobiliaria-joner.webp' },
+      { nome: 'Thomas Representações', logo: 'img/marcas/thomas-representacoes.webp' },
+      { nome: 'Tomasi Logística', logo: 'img/marcas/tomasi-logistica.webp' },
+      { nome: 'Proinst Engenharia', logo: 'img/marcas/proinst-engenharia.webp' },
+      { nome: 'STW', logo: 'img/marcas/stw.webp' },
+      { nome: 'Guillante Arquitetura', logo: 'img/marcas/guillante-arquitetura.webp' },
+      { nome: 'Joel Imóveis', logo: 'img/marcas/joel-imoveis.webp' },
+      { nome: 'Fazenda Santa Rosa', logo: 'img/marcas/fazenda-santa-rosa.webp' },
+      { nome: 'Dinamize Engenharia', logo: 'img/marcas/dinamize.webp' },
+      { nome: 'Salvini Contabilidade', logo: 'img/marcas/salvini.webp' },
+      { nome: 'Rocket Tecnologia', logo: 'img/marcas/rocket-tecnologia.webp' },
+      { nome: 'Nexsul', logo: 'img/marcas/nexsul.webp' },
+      { nome: 'Saneban', logo: 'img/marcas/saneban.webp' },
+      { nome: 'Refricomp', logo: 'img/marcas/refricomp.webp' },
+      { nome: 'Viabile Engenharia', logo: 'img/marcas/viabile-engenharia.webp' },
+      { nome: 'Agrotech', logo: 'img/marcas/agrotech.webp' },
+      { nome: 'Tempereasy', logo: 'img/marcas/tempereasy.webp' },
+      { nome: 'Bela Vista Esquadrias', logo: 'img/marcas/bela-vistta-esquadrias-e-vidracaria.webp' },
+      { nome: 'Vovô Garoto', logo: 'img/marcas/vovo-garoto-restaurante-e-pizzaria.webp' },
+      { nome: 'Carmelito e Beto', logo: 'img/marcas/carmelito-e-beto.webp' },
+      { nome: "Viccenzo's Café", logo: 'img/marcas/viccezos-cafe.webp' }
+    ]
   },
   diferenciais: [
     { icone: 'pen', titulo: 'Layout exclusivo', texto: 'Nada de tema pronto. Cada site nasce da identidade e do público da sua marca.' },
@@ -36,9 +64,9 @@ WD.CONFIG_PADRAO = {
     { id: 'thomas', nome: 'Thomas Representações', segmento: 'Construção civil', imagem: 'img/thomas-mockup.webp', link: 'https://wildnerdesign.com.br/projeto/thomas-representacoes/', texto: 'Identidade visual e site para uma representante de pisos e porcelanatos, com foco em confiança e tradição.' }
   ],
   depoimentos: [
-    { id: 'tomasi', nome: 'Carlos Eduardo Tomasi', empresa: 'Thomas Representações', texto: 'A Wildner Design transformou nossa marca em algo que realmente conecta com nossos clientes. O trabalho foi ágil, criativo e superou todas as expectativas!' },
-    { id: 'knecht', nome: 'Fernando André Knecht', empresa: 'Proinst Engenharia', texto: 'O cuidado com os detalhes e a originalidade do design nos conquistaram. Trabalhar com a Wildner Design foi a melhor decisão para nosso projeto.' },
-    { id: 'soares', nome: 'Luiz Antônio Soares', empresa: 'Flip Estratégia', texto: 'A experiência de mais de 10 anos se reflete na qualidade e profissionalismo. A Wildner Design conseguiu traduzir exatamente o que nossa agência precisava.' }
+    { id: 'tomasi', foto: 'img/dep-carlos.webp', nome: 'Carlos Eduardo Tomasi', empresa: 'Thomas Representações', texto: 'A Wildner Design transformou nossa marca em algo que realmente conecta com nossos clientes. O trabalho foi ágil, criativo e superou todas as expectativas!' },
+    { id: 'knecht', foto: 'img/dep-fernando.webp', nome: 'Fernando André Knecht', empresa: 'Proinst Engenharia', texto: 'O cuidado com os detalhes e a originalidade do design nos conquistaram. Trabalhar com a Wildner Design foi a melhor decisão para nosso projeto.' },
+    { id: 'soares', foto: 'img/dep-tonho.webp', nome: 'Luiz Antônio Soares', empresa: 'Flip Estratégia', texto: 'A experiência de mais de 10 anos se reflete na qualidade e profissionalismo. A Wildner Design conseguiu traduzir exatamente o que nossa agência precisava.' }
   ],
   funcionalidades: [
     { icone: 'whats', titulo: 'WhatsApp flutuante', texto: 'Com mensagem pronta que diz de qual página o cliente veio.' },

@@ -45,7 +45,7 @@
       case 'check': return `<div class="campo${larg}"><label class="check"><input type="checkbox" ${at}${v ? ' checked' : ''}>${f.label}</label>${dica}</div>`;
       case 'select': { const ops = typeof f.opcoes === 'function' ? f.opcoes() : f.opcoes; return `<div class="campo${larg}"><label for="${id}">${f.label}</label><select ${at}>${Object.entries(ops).map(([k, n]) => `<option value="${esc(k)}"${String(v) === k ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select>${dica}</div>`; }
       case 'icone': return `<div class="campo${larg}"><label for="${id}">${f.label}</label><select ${at}>${ICONES.map(([k, n]) => `<option value="${k}"${v === k ? ' selected' : ''}>${n}</option>`).join('')}</select></div>`;
-      case 'imagem': return `<div class="campo${larg}"><label for="${id}">${f.label}</label>${v ? `<img class="miniatura" src="${esc(v)}" alt="">` : ''}<div style="display:flex;gap:8px"><input type="text" ${at} value="${esc(v && v.startsWith('data:') ? '(imagem enviada)' : v)}" placeholder="img/arquivo.webp ou https://…" style="flex:1"><label class="btn btn--sm btn--g">${ic('image')}Enviar<input type="file" accept="image/*" hidden data-upload="${p}"></label></div><span class="dica">Imagem horizontal, de preferência 1600 × 1000 px.</span></div>`;
+      case 'imagem': return `<div class="campo${larg}"><label for="${id}">${f.label}</label>${v ? `<img class="miniatura" src="${esc(v)}" alt="">` : ''}<div style="display:flex;gap:8px"><input type="text" ${at} value="${esc(v && v.startsWith('data:') ? '(imagem enviada)' : v)}" placeholder="img/arquivo.webp ou https://…" style="flex:1"><label class="btn btn--sm btn--g">${ic('image')}Enviar<input type="file" accept="image/*" hidden data-upload="${p}"></label></div><span class="dica">${f.dica || 'Imagem horizontal, de preferência 1600 × 1000 px.'}</span></div>`;
       case 'fixo': return `<div class="campo${larg}"><span class="rot">${f.label}</span><div class="fixo num" title="A numeração é automática e não pode ser alterada">${esc(v || '—')}</div>${dica}</div>`;
       case 'subtitulo': return `<div class="subtit">${f.label}</div>`;
       case 'escolha': {
@@ -206,9 +206,13 @@
         F('empresa.whatsapp', 'WhatsApp (só números, com 55)', 'text', { w: 'm3' }), F('empresa.telefoneExibicao', 'Telefone como aparece', 'text', { w: 'm3' }),
         F('empresa.email', 'E-mail', 'text', { w: 'm3' }), F('empresa.site', 'Site', 'text', { w: 'm3' }),
         F('empresa.cidade', 'Cidade', 'text', { w: 'm3' }), F('empresa.cnpj', 'CNPJ', 'text', { w: 'm3' }),
-        F('empresa.sobre', 'Quem somos', 'textarea', { rows: 4 }),
+        F('empresa.imagemCapa', 'Imagem da capa (mockup)', 'imagem', { dica: 'Aparece ao lado do título na primeira página. Vertical, de preferência 1100 × 1366 px, com fundo escuro.' }),
+        F('', 'Quem somos', 'subtitulo'),
+        F('empresa.sobreTitulo', 'Título', 'text', { dica: 'A última palavra ou nome fica em destaque.' }),
+        F('empresa.sobre', 'Texto', 'textarea', { rows: 4 }),
+        F('empresa.servicos', 'O que fazemos', 'csv'),
         F('empresa.clientes', 'Clientes', 'text', { w: 'm3' }), F('empresa.anos', 'Anos de experiência', 'text', { w: 'm3' }),
-        F('empresa.marcas', 'Marcas que confiam', 'linhas', { rows: 5 })
+        F('empresa.marcas', 'Marcas que confiam', 'lista', { campos: [F('nome', 'Nome', 'text'), F('logo', 'Logo', 'imagem', { dica: 'PNG ou WebP com fundo transparente, logo em cinza escuro.' })], novo: () => ({ nome: '', logo: '' }), resumo: (x, i) => x.nome || `Marca ${i + 1}`, novoRotulo: 'Adicionar marca' })
       ] },
       { id: 'padroes', titulo: 'Valores padrão', desc: 'Usados em todo orçamento novo', campos: [
         F('horaTecnica', 'Hora técnica', 'dinheiro', { w: 'm2' }), F('validadeDias', 'Validade (dias)', 'numero', { w: 'm2' }), F('suporteDias', 'Suporte (dias)', 'numero', { w: 'm2' }),
@@ -224,7 +228,7 @@
         F('portfolio', '', 'lista', { campos: [F('nome', 'Nome', 'text', { w: 'm4' }), F('segmento', 'Segmento', 'text', { w: 'm2' }), F('imagem', 'Imagem (mockup)', 'imagem'), F('link', 'Link do projeto', 'text', { input: 'url' }), F('texto', 'Descrição', 'textarea', { rows: 2 })], novo: () => ({ id: novoId(), nome: '', segmento: '', imagem: '', link: '', texto: '' }), resumo: (x, i) => x.nome || `Projeto ${i + 1}`, novoRotulo: 'Adicionar projeto' })
       ] },
       { id: 'depoimentos', titulo: 'Depoimentos', campos: [
-        F('depoimentos', '', 'lista', { campos: [F('nome', 'Nome', 'text', { w: 'm3' }), F('empresa', 'Empresa', 'text', { w: 'm3' }), F('texto', 'Depoimento', 'textarea', { rows: 3 })], novo: () => ({ id: novoId(), nome: '', empresa: '', texto: '' }), resumo: (x, i) => x.nome || `Depoimento ${i + 1}` })
+        F('depoimentos', '', 'lista', { campos: [F('nome', 'Nome', 'text', { w: 'm3' }), F('empresa', 'Empresa', 'text', { w: 'm3' }), F('foto', 'Foto', 'imagem', { dica: 'Quadrada, de preferência 400 × 400 px.' }), F('texto', 'Depoimento', 'textarea', { rows: 3 })], novo: () => ({ id: novoId(), nome: '', empresa: '', foto: '', texto: '' }), resumo: (x, i) => x.nome || `Depoimento ${i + 1}` })
       ] },
       { id: 'funcionalidades', titulo: 'Catálogo de funcionalidades', desc: 'As 6 primeiras entram em todo orçamento novo', campos: [
         F('funcionalidades', '', 'lista', { campos: [F('icone', 'Ícone', 'icone', { w: 'm2' }), F('titulo', 'Título', 'text', { w: 'm4' }), F('texto', 'Texto', 'text')], novo: () => ({ icone: 'code', titulo: '', texto: '' }), resumo: (x, i) => x.titulo || `Funcionalidade ${i + 1}` })
