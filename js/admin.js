@@ -47,6 +47,20 @@
       case 'icone': return `<div class="campo${larg}"><label for="${id}">${f.label}</label><select ${at}>${ICONES.map(([k, n]) => `<option value="${k}"${v === k ? ' selected' : ''}>${n}</option>`).join('')}</select></div>`;
       case 'imagem': return `<div class="campo${larg}"><label for="${id}">${f.label}</label>${v ? `<img class="miniatura" src="${esc(v)}" alt="">` : ''}<div style="display:flex;gap:8px"><input type="text" ${at} value="${esc(v && v.startsWith('data:') ? '(imagem enviada)' : v)}" placeholder="img/arquivo.webp ou https://…" style="flex:1"><label class="btn btn--sm btn--g">${ic('image')}Enviar<input type="file" accept="image/*" hidden data-upload="${p}"></label></div><span class="dica">${f.dica || 'Imagem horizontal, de preferência 1600 × 1000 px.'}</span></div>`;
       case 'fixo': return `<div class="campo${larg}"><span class="rot">${f.label}</span><div class="fixo num" title="A numeração é automática e não pode ser alterada">${esc(v || '—')}</div>${dica}</div>`;
+      case 'pagamentos': {
+        const pg = v || {}; const ordem = WD.ordemPagamento(pg);
+        const ativos = ordem.filter(k => pg[k] && pg[k].ativo); const fora = ordem.filter(k => !(pg[k] && pg[k].ativo));
+        const extra = { avista: [F('desconto', 'Desconto (%)', 'numero', { w: 'm2' })], parcelado: [F('entradaPct', 'Entrada (%)', 'numero', { w: 'm2' }), F('parcelas', 'Parcelas', 'numero', { w: 'm2' })], cartao: [F('parcelas', 'Até quantas vezes', 'numero', { w: 'm2' })] };
+        const ph = { avista: ['À vista no Pix', 'Pagamento único na assinatura'], parcelado: ['Entrada + {parcelas} parcelas', '{entrada}% na assinatura e o restante em {parcelas}x sem juros'], cartao: ['Cartão de crédito', 'Em até {cartao}x, com as taxas da operadora'] };
+        return `<div class="itens">${ativos.map((k, i) => `
+          <div class="item"><header><b>${esc((pg[k] && pg[k].titulo) || WD.NOMES_PAG[k])}</b>
+            <button type="button" class="icone-btn" title="Subir" data-acao="pag" data-op="up" data-forma="${k}" data-lista="${p}"${i === 0 ? ' disabled' : ''}>${ic('up')}</button>
+            <button type="button" class="icone-btn" title="Descer" data-acao="pag" data-op="down" data-forma="${k}" data-lista="${p}"${i === ativos.length - 1 ? ' disabled' : ''}>${ic('down')}</button>
+            <button type="button" class="icone-btn perigo" title="Remover" data-acao="pag" data-op="del" data-forma="${k}" data-lista="${p}">${ic('trash')}</button>
+          </header><div class="corpo">${[F('titulo', 'Título', 'text', { w: 'm3', ph: ph[k][0] }), F('descricao', 'Descrição', 'text', { w: 'm3', ph: ph[k][1] })].concat(extra[k]).map(sf => campoHTML(sf, dados, p + '.' + k)).join('')}</div></div>`).join('')}
+          <div class="campo"><span class="dica">Use as setas para mudar a ordem e a lixeira para tirar uma forma da proposta. Título ou descrição em branco usam o texto padrão. Atalhos: {desconto}, {entrada}, {parcelas}, {cartao}.</span></div>
+          ${fora.length ? `<div class="add">${fora.map(k => `<button type="button" class="btn btn--sm btn--g" data-acao="pag" data-op="add" data-forma="${k}" data-lista="${p}">${ic('plus')}${WD.NOMES_PAG[k]}</button>`).join('')}</div>` : ''}</div>`;
+      }
       case 'subtitulo': return `<div class="subtit">${f.label}</div>`;
       case 'escolha': {
         const ops = f.opcoes(); const sel = v || [];
@@ -90,7 +104,8 @@
       else if (t === 'imagem' && v === '(imagem enviada)') return;
       gravar(getDados(), p, v);
       const head = el.closest('.item') && el.closest('.item').querySelector('header b');
-      if (head) { const lp = el.closest('.item').querySelector('[data-acao="del"]'); const f = achaCampo(secoes, lp.dataset.lista); const arr = ler(getDados(), lp.dataset.lista); if (f && f.resumo) head.textContent = f.resumo(arr[lp.dataset.i], Number(lp.dataset.i)); }
+      const lp = head && el.closest('.item').querySelector('[data-acao="del"]');
+      if (head && lp) { const f = achaCampo(secoes, lp.dataset.lista); const arr = ler(getDados(), lp.dataset.lista); if (f && f.resumo) head.textContent = f.resumo(arr[lp.dataset.i], Number(lp.dataset.i)); }
       aoMudar();
     });
     root.addEventListener('change', async e => {
@@ -110,6 +125,16 @@
     });
     root.addEventListener('click', e => {
       const b = e.target.closest('[data-acao]'); if (!b) return;
+      if (b.dataset.acao === 'pag') {
+        const pg = ler(getDados(), b.dataset.lista) || {}; const k = b.dataset.forma; const op = b.dataset.op;
+        const ordem = WD.ordemPagamento(pg); const ativos = ordem.filter(x => pg[x] && pg[x].ativo);
+        if (op === 'del') { if (ativos.length <= 1) { alert('Deixe pelo menos uma forma de pagamento.'); return; } pg[k].ativo = false; }
+        if (op === 'add') { pg[k] = Object.assign(pg[k] || {}, { ativo: true }); }
+        if (op === 'up' || op === 'down') { const i = ativos.indexOf(k); const j = op === 'up' ? i - 1 : i + 1; if (j >= 0 && j < ativos.length) [ativos[i], ativos[j]] = [ativos[j], ativos[i]]; }
+        const novosAtivos = ordem.filter(x => pg[x] && pg[x].ativo);
+        pg.ordem = (op === 'up' || op === 'down' ? ativos : novosAtivos.filter(x => x !== k).concat(op === 'add' ? [k] : [])).concat(ordem.filter(x => !(pg[x] && pg[x].ativo)));
+        gravar(getDados(), b.dataset.lista, pg); aoMudar(); rerender(); return;
+      }
       const p = b.dataset.lista; const arr = ler(getDados(), p) || []; const i = Number(b.dataset.i);
       const f = achaCampo(secoes, p);
       if (b.dataset.acao === 'add') arr.push(f.novo());
@@ -172,13 +197,7 @@
         F('descricaoBase', 'Descrição do projeto', 'text', { w: 'm4' }),
         F('valorBase', 'Valor', 'dinheiro', { w: 'm2' }),
         F('', 'Formas de pagamento', 'subtitulo'),
-        F('pagamento.avista.ativo', 'À vista no Pix', 'check', { w: 'm3' }),
-        F('pagamento.avista.desconto', 'Desconto à vista (%)', 'numero', { w: 'm3' }),
-        F('pagamento.parcelado.ativo', 'Entrada + parcelas', 'check', { w: 'm2' }),
-        F('pagamento.parcelado.entradaPct', 'Entrada (%)', 'numero', { w: 'm2' }),
-        F('pagamento.parcelado.parcelas', 'Parcelas', 'numero', { w: 'm2' }),
-        F('pagamento.cartao.ativo', 'Cartão de crédito', 'check', { w: 'm3' }),
-        F('pagamento.cartao.parcelas', 'Até quantas vezes', 'numero', { w: 'm3' }),
+        F('pagamento', '', 'pagamentos'),
         F('pagamentoPadrao', 'Forma que já vem marcada', 'select', { opcoes: { avista: 'À vista no Pix', parcelado: 'Entrada + parcelas', cartao: 'Cartão de crédito' } }),
         F('', 'Serviços opcionais', 'subtitulo'),
         F('opcionais', '', 'lista', { campos: [F('nome', 'Nome', 'text', { w: 'm4' }), F('valor', 'Valor', 'dinheiro', { w: 'm2' }), F('desc', 'Descrição', 'text'), F('tipo', 'Cobrança', 'select', { w: 'm3', opcoes: { unico: 'Valor único', mensal: 'Mensal' } }), F('marcado', 'Já vem marcado', 'check', { w: 'm3' })], novo: () => ({ nome: '', desc: '', valor: 0, tipo: 'unico', marcado: false }), resumo: (x, i) => `${x.nome || 'Opcional ' + (i + 1)} · R$ ${brl(x.valor, false)}${x.tipo === 'mensal' ? '/mês' : ''}`, catalogo: () => cfg.opcionais.map(o => ({ ...o, marcado: false })), novoRotulo: 'Adicionar opcional' })
@@ -217,9 +236,7 @@
       { id: 'padroes', titulo: 'Valores padrão', desc: 'Usados em todo orçamento novo', campos: [
         F('horaTecnica', 'Hora técnica', 'dinheiro', { w: 'm2' }), F('validadeDias', 'Validade (dias)', 'numero', { w: 'm2' }), F('suporteDias', 'Suporte (dias)', 'numero', { w: 'm2' }),
         F('', 'Formas de pagamento', 'subtitulo'),
-        F('pagamento.avista.ativo', 'À vista no Pix', 'check', { w: 'm3' }), F('pagamento.avista.desconto', 'Desconto à vista (%)', 'numero', { w: 'm3' }),
-        F('pagamento.parcelado.ativo', 'Entrada + parcelas', 'check', { w: 'm2' }), F('pagamento.parcelado.entradaPct', 'Entrada (%)', 'numero', { w: 'm2' }), F('pagamento.parcelado.parcelas', 'Parcelas', 'numero', { w: 'm2' }),
-        F('pagamento.cartao.ativo', 'Cartão de crédito', 'check', { w: 'm3' }), F('pagamento.cartao.parcelas', 'Até quantas vezes', 'numero', { w: 'm3' })
+        F('pagamento', '', 'pagamentos')
       ] },
       { id: 'diferenciais', titulo: 'Diferenciais', desc: 'Bloco "Quem somos"', campos: [
         F('diferenciais', '', 'lista', { campos: [F('icone', 'Ícone', 'icone', { w: 'm2' }), F('titulo', 'Título', 'text', { w: 'm4' }), F('texto', 'Texto', 'textarea', { rows: 2 })], novo: () => clone({ icone: 'pen', titulo: '', texto: '' }), resumo: (x, i) => x.titulo || `Diferencial ${i + 1}` })

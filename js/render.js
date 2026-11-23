@@ -35,10 +35,7 @@ window.WD = window.WD || {};
       else { total += Number(op.valor || 0); linhas.push([op.nome, Number(op.valor || 0)]); }
     });
     const p = o.pagamento || {};
-    const formas = [];
-    if (p.avista && p.avista.ativo) formas.push('avista');
-    if (p.parcelado && p.parcelado.ativo) formas.push('parcelado');
-    if (p.cartao && p.cartao.ativo) formas.push('cartao');
+    const formas = WD.ordemPagamento(p).filter(k => p[k] && p[k].ativo);
     let forma = escolha.pagamento || o.pagamentoPadrao;
     if (!formas.includes(forma)) forma = formas[0] || 'parcelado';
     const desc = p.avista ? Number(p.avista.desconto || 0) : 0;
@@ -50,6 +47,25 @@ window.WD = window.WD || {};
     const cartao = total / nCartao;
     const final = forma === 'avista' ? avista : total;
     return { total, linhas, mensal, forma, formas, desc, avista, entrada, nParc, parcela, nCartao, cartao, final, marcados };
+  };
+
+  WD.FORMAS_PAG = ['avista', 'parcelado', 'cartao'];
+  WD.NOMES_PAG = { avista: 'À vista no Pix', parcelado: 'Entrada + parcelas', cartao: 'Cartão de crédito' };
+  WD.ordemPagamento = function (p) {
+    const o = ((p && p.ordem) || []).filter(k => WD.FORMAS_PAG.includes(k));
+    return o.concat(WD.FORMAS_PAG.filter(k => !o.includes(k)));
+  };
+  /* Título e descrição de cada forma: texto livre do orçamento ou o padrão.
+     Atalhos: {desconto} {entrada} {parcelas} {cartao} */
+  WD.textosPagamento = function (forma, p, c) {
+    const x = (p && p[forma]) || {};
+    const pad = {
+      avista: ['À vista no Pix', 'Pagamento único na assinatura'],
+      parcelado: c.entrada > 0 ? ['Entrada + {parcelas} parcelas', '{entrada}% na assinatura e o restante em {parcelas}x sem juros'] : ['{parcelas} parcelas', 'Em {parcelas}x sem juros'],
+      cartao: ['Cartão de crédito', 'Em até {cartao}x, com as taxas da operadora']
+    }[forma];
+    const sub = t => String(t).replace(/\{desconto\}/g, c.desc).replace(/\{entrada\}/g, p.parcelado ? p.parcelado.entradaPct : 0).replace(/\{parcelas\}/g, c.nParc).replace(/\{cartao\}/g, c.nCartao);
+    return [sub(x.titulo || pad[0]), sub(x.descricao || pad[1])];
   };
 
   WD.textoForma = function (c) {
@@ -184,9 +200,7 @@ window.WD = window.WD || {};
         <div>
           <div class="preco"><div class="preco__l">Total do projeto</div><div class="preco__v"><small>R$</small><span data-total-n>${brl(c.final)}</span></div><div class="linhas" data-linhas></div></div>
           <div class="pagto" role="radiogroup" aria-label="Forma de pagamento">
-            ${c.formas.includes('avista') ? opcao('avista', 'À vista no Pix', 'Pagamento único na assinatura', 'R$ ' + brl(c.avista), c.desc ? c.desc + '% off' : '') : ''}
-            ${c.formas.includes('parcelado') ? opcao('parcelado', c.entrada > 0 ? `Entrada + ${c.nParc} parcelas` : `${c.nParc} parcelas`, c.entrada > 0 ? `${p.parcelado.entradaPct}% na assinatura e o restante em ${c.nParc}x sem juros` : `Em ${c.nParc}x sem juros`, '') : ''}
-            ${c.formas.includes('cartao') ? opcao('cartao', 'Cartão de crédito', `Em até ${c.nCartao}x, com as taxas da operadora`, '') : ''}
+            ${c.formas.map(k => { const [t, d] = WD.textosPagamento(k, p, c).map(esc); return opcao(k, t, d, k === 'avista' ? 'R$ ' + brl(c.avista) : '', k === 'avista' && c.desc ? c.desc + '% off' : ''); }).join('')}
           </div>
         </div>
         ${(o.opcionais || []).length ? `<div class="extras">
