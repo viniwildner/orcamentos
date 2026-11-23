@@ -35,6 +35,11 @@ drop policy if exists "painel configuracoes" on public.configuracoes;
 create policy "painel configuracoes" on public.configuracoes
   for all to authenticated using (true) with check (true);
 
+-- Permissões: o painel (usuário logado) lê e grava; visitante sem login não acessa as tabelas.
+grant usage on schema public to anon, authenticated;
+grant select, insert, update, delete on public.orcamentos, public.configuracoes to authenticated;
+revoke all on public.orcamentos, public.configuracoes from anon;
+
 -- O cliente abre a proposta pelo link (id aleatório), sem login.
 -- Estas funções devolvem só aquela proposta, e nunca rascunhos.
 create or replace function public.get_proposta(p_id uuid)
