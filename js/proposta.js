@@ -2,7 +2,7 @@
 (async function () {
   const app = document.getElementById('app');
   const id = new URLSearchParams(location.search).get('id');
-  const aviso = (t, p) => { app.innerHTML = `<div class="aviso"><div><img src="img/logo-branco.png" alt="Wildner Design" style="height:24px"><h1>${t}</h1><p>${p}</p></div></div>`; };
+  const aviso = (t, p) => { app.innerHTML = `<div class="aviso"><div><span class="aviso__logo">${WD.logo()}</span><h1>${t}</h1><p>${p}</p></div></div>`; };
   if (!id) return aviso('Proposta não encontrada', 'O link parece incompleto. Peça um novo link para a Wildner Design.');
 
   let r;
@@ -16,10 +16,12 @@
   document.title = `Proposta ${o.numero || ''} · ${o.cliente.empresa || cfg.empresa.nome}`;
   const acoes = `<button class="btn btn-pdf so-tela" type="button" id="pdf" title="Salvar em PDF"><svg class="i" style="width:18px;height:18px"><use href="#i-download"/></svg><span>Baixar PDF</span></button>`;
   app.innerHTML = WD.renderProposta(o, cfg, { acoes });
-  document.getElementById('pdf').addEventListener('click', () => window.print());
+  const bPdf = document.getElementById('pdf');
+  bPdf.addEventListener('click', () => WD.menuPDF(bPdf, modo => WD.imprimir(window, modo)));
 
   WD.ligarProposta(app, o, cfg, escolha => { WD.store.registrarEscolha(id, escolha).catch(e => console.warn(e)); });
   WD.store.marcarVisto(id).catch(() => {});
   if (location.hash) { const alvo = document.querySelector(location.hash); if (alvo) alvo.scrollIntoView(); }
-  if (new URLSearchParams(location.search).get('pdf') === '1') setTimeout(() => window.print(), 600);
+  const pedido = new URLSearchParams(location.search).get('pdf');
+  if (pedido) setTimeout(() => WD.imprimir(window, pedido === 'pb' ? 'pb' : 'cor'), 600);
 })();

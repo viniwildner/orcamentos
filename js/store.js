@@ -84,9 +84,27 @@ window.WD = window.WD || {};
     return cfg;
   };
 
-  WD.proximoNumero = function (lista) {
-    const ano = new Date().getFullYear();
-    const n = lista.map(x => String(x.numero || '')).filter(x => x.startsWith(ano + '-')).map(x => parseInt(x.split('-')[1], 10) || 0);
-    return `${ano}-${String((n.length ? Math.max(...n) : 0) + 1).padStart(3, '0')}`;
+  /* Numeração travada: sequência por ano, nunca repete.
+     2026 começa em 0129; cada ano novo recomeça em 0001. Formato 0129/2026. */
+  WD.INICIO_NUMERACAO = { 2026: 129 };
+  WD.formatarNumero = (n, ano) => `${String(n).padStart(4, '0')}/${ano}`;
+  const anoAtual = () => Number(new Intl.DateTimeFormat('en', { year: 'numeric', timeZone: 'America/Sao_Paulo' }).format(new Date()));
+  function numeroPorLista(lista, ano) {
+    const n = (lista || []).map(x => String(x.numero || '')).filter(x => x.endsWith('/' + ano)).map(x => parseInt(x, 10) || 0);
+    const inicio = WD.INICIO_NUMERACAO[ano] || 1;
+    return Math.max(inicio, (n.length ? Math.max(...n) : 0) + 1);
+  }
+  WD.proximoNumero = async function (lista) {
+    const ano = anoAtual();
+    if (WD.store.modo === 'supabase') {
+      try { const r = await WD.store.sb.rpc('proximo_numero'); if (r.error) throw r.error; return r.data; }
+      catch (e) { console.warn('Numeração online indisponível, usando a lista:', e.message || e); return WD.formatarNumero(numeroPorLista(lista, ano), ano); }
+    }
+    /* Modo local: contador guardado no próprio navegador */
+    const salvo = await tx('config', 'readonly', s => s.get('numeracao'));
+    let ultimo = salvo && salvo.ano === ano ? salvo.ultimo : 0;
+    const proximo = Math.max(ultimo + 1, numeroPorLista(lista, ano));
+    await tx('config', 'readwrite', s => s.put({ id: 'numeracao', ano, ultimo: proximo }));
+    return WD.formatarNumero(proximo, ano);
   };
 })();

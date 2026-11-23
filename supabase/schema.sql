@@ -40,6 +40,35 @@ grant usage on schema public to anon, authenticated;
 grant select, insert, update, delete on public.orcamentos, public.configuracoes to authenticated;
 revoke all on public.orcamentos, public.configuracoes from anon;
 
+-- Numeração travada: uma sequência por ano, que nunca repete.
+-- 2026 começa em 0129; os anos seguintes começam em 0001. Formato: 0129/2026.
+create table if not exists public.numeracao (
+  ano int primary key,
+  ultimo int not null
+);
+alter table public.numeracao enable row level security;
+revoke all on public.numeracao from anon, authenticated;
+
+create or replace function public.proximo_numero()
+returns text
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_ano int := extract(year from (now() at time zone 'America/Sao_Paulo'))::int;
+  v_n int;
+begin
+  insert into numeracao (ano, ultimo)
+  values (v_ano, case when v_ano = 2026 then 129 else 1 end)
+  on conflict (ano) do update set ultimo = numeracao.ultimo + 1
+  returning ultimo into v_n;
+  return lpad(v_n::text, 4, '0') || '/' || v_ano;
+end;
+$$;
+revoke all on function public.proximo_numero() from public, anon;
+grant execute on function public.proximo_numero() to authenticated;
+
 -- O cliente abre a proposta pelo link (id aleatório), sem login.
 -- Estas funções devolvem só aquela proposta, e nunca rascunhos.
 create or replace function public.get_proposta(p_id uuid)

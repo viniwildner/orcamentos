@@ -81,7 +81,7 @@ window.WD = window.WD || {};
 
     add('capa', 'Apresentação', `
     <section class="folha capa" id="capa">
-      <img class="so-print logo-print" src="${opts.base || ''}img/logo-branco.png" alt="${esc(E.nome)}">
+      <span class="so-print logo-print">${WD.logo(opts.base, esc(E.nome))}</span>
       <div>
         <p class="rotulo">Proposta de website</p>
         <h1>${titulo(o)}</h1>
@@ -241,20 +241,58 @@ window.WD = window.WD || {};
           <div class="linhas-a"><div>${esc(E.responsavel)}<br>${esc(E.nome)}</div><div>${esc(o.cliente.contato || '')}<br>${esc(o.cliente.empresa || '')}</div></div>
         </div>
       </div>
-      <footer class="rodape"><img src="${opts.base || ''}img/logo-branco.png" alt="${esc(E.nome)}"><span>${esc(E.cidade)}, ${dataExtenso(o.data)} · Proposta ${esc(num)}</span></footer>
+      <footer class="rodape"><span class="rodape__logo">${WD.logo(opts.base, esc(E.nome))}</span><span>${esc(E.cidade)}, ${dataExtenso(o.data)} · Proposta ${esc(num)}</span></footer>
     </section>`);
 
     return `${WD.SPRITE}
 <header class="topo"><div class="topo__in">
-  <img src="${opts.base || ''}img/logo-branco.png" alt="${esc(E.nome)}">
+  <span class="topo__logo">${WD.logo(opts.base, esc(E.nome))}</span>
   <div class="topo__meta">Proposta <b class="num">${esc(num)}</b></div>
   ${opts.acoes || ''}
+  ${opts.semTema ? '' : WD.botaoTema('btn-icone so-tela')}
   <a class="btn btn--p so-tela" href="#aceite">Aprovar proposta</a>
 </div></header>
 <div class="casca">
   <nav class="indice" aria-label="Seções da proposta"><ol>${indice.map(([id, n]) => `<li><a href="#${id}">${n}</a></li>`).join('')}</ol></nav>
   <main>${secoes.join('\n')}</main>
 </div>`;
+  };
+
+  /* ---------- PDF: colorido (como na tela) ou preto e branco (fundo branco) ---------- */
+  function ajustarPagina(win) {
+    const d = win.document;
+    let s = d.getElementById('wd-pagina');
+    if (!s) { s = d.createElement('style'); s.id = 'wd-pagina'; d.head.appendChild(s); }
+    const cor = win.getComputedStyle(d.documentElement).getPropertyValue('--fundo').trim() || '#111013';
+    s.textContent = `@page{background:${cor}}`;
+  }
+  WD.ajustarPagina = ajustarPagina;
+  WD.imprimir = function (win, modo) {
+    const d = win.document, root = d.documentElement;
+    if (modo === 'pb') root.dataset.impressao = 'pb'; else delete root.dataset.impressao;
+    d.querySelectorAll('.conds details').forEach(x => { x.open = true; });
+    ajustarPagina(win);
+    const fim = () => { delete root.dataset.impressao; ajustarPagina(win); win.removeEventListener('afterprint', fim); };
+    win.addEventListener('afterprint', fim);
+    win.focus(); win.print();
+  };
+  WD.menuPDF = function (botao, aoEscolher) {
+    document.querySelectorAll('.menu-pdf').forEach(m => m.remove());
+    const m = document.createElement('div');
+    m.className = 'menu-pdf'; m.setAttribute('role', 'menu');
+    m.innerHTML = `<button type="button" role="menuitem" data-m="cor"><svg><use href="#i-palette"/></svg><span>PDF colorido<small>Igual à tela, para enviar ao cliente</small></span></button>` +
+      `<button type="button" role="menuitem" data-m="pb"><svg><use href="#i-printer"/></svg><span>Preto e branco<small>Fundo branco e pouca tinta, para imprimir</small></span></button>`;
+    (botao.closest('dialog') || document.body).appendChild(m);
+    const r = botao.getBoundingClientRect();
+    const acima = r.bottom + m.offsetHeight + 12 > innerHeight;
+    m.style.top = (acima ? r.top - m.offsetHeight - 6 : r.bottom + 6) + 'px';
+    m.style.left = Math.max(8, Math.min(r.right - m.offsetWidth, innerWidth - m.offsetWidth - 8)) + 'px';
+    const fechar = () => { m.remove(); document.removeEventListener('pointerdown', fora, true); document.removeEventListener('keydown', tecla, true); };
+    const fora = e => { if (!m.contains(e.target) && !botao.contains(e.target)) fechar(); };
+    const tecla = e => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); fechar(); botao.focus(); } };
+    setTimeout(() => { document.addEventListener('pointerdown', fora, true); document.addEventListener('keydown', tecla, true); });
+    m.addEventListener('click', e => { const b = e.target.closest('[data-m]'); if (!b) return; fechar(); aoEscolher(b.dataset.m); });
+    m.querySelector('button').focus();
   };
 
   /* Interatividade: escolha de pagamento e opcionais, índice ativo, link de aprovação */
@@ -308,6 +346,7 @@ window.WD = window.WD || {};
       r.style.setProperty('--r', rs[rs.length - 1].offsetWidth / 2 + 'px');
     });
     ajustarMapa(); if (document.fonts) document.fonts.ready.then(ajustarMapa);
-    window.addEventListener('beforeprint', () => $$('.conds details').forEach(d => d.open = true));
+    const win = root.ownerDocument.defaultView;
+    if (!win.__wdImpressao) { win.__wdImpressao = true; win.addEventListener('beforeprint', () => { win.document.querySelectorAll('.conds details').forEach(d => { d.open = true; }); ajustarPagina(win); }); }
   };
 })();

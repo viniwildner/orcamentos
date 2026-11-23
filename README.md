@@ -16,7 +16,9 @@ Sistema para montar propostas comerciais no navegador, guardar no banco de dados
 2. O editor salva sozinho e mostra a proposta ao lado, no tamanho de computador ou de celular.
 3. **Enviar** abre o WhatsApp ou o e-mail com a mensagem pronta e o link. O status passa para *Enviado*.
 4. Quando o cliente abre o link, o status vira *Visualizado*. Ao clicar em **Aprovar pelo WhatsApp**, a escolha dele (pagamento e opcionais) fica gravada e o status vira *Aprovado*.
-5. **PDF** abre a impressão do navegador já em A4: escolha *Salvar como PDF*.
+5. **PDF** pergunta se é a versão colorida ou a preto e branco (fundo branco, para imprimir) e abre a impressão já em A4: escolha *Salvar como PDF*.
+6. A **numeração** é automática e não pode ser editada: `0129/2026`, `0130/2026`… Em 2026 começa em 0129 e a cada ano novo recomeça em 0001. Número de orçamento excluído não é reaproveitado.
+7. O botão de **sol/lua** no topo alterna entre modo escuro e modo claro.
 
 ## Conectar o banco online (Supabase)
 

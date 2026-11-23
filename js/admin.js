@@ -46,6 +46,7 @@
       case 'select': { const ops = typeof f.opcoes === 'function' ? f.opcoes() : f.opcoes; return `<div class="campo${larg}"><label for="${id}">${f.label}</label><select ${at}>${Object.entries(ops).map(([k, n]) => `<option value="${esc(k)}"${String(v) === k ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select>${dica}</div>`; }
       case 'icone': return `<div class="campo${larg}"><label for="${id}">${f.label}</label><select ${at}>${ICONES.map(([k, n]) => `<option value="${k}"${v === k ? ' selected' : ''}>${n}</option>`).join('')}</select></div>`;
       case 'imagem': return `<div class="campo${larg}"><label for="${id}">${f.label}</label>${v ? `<img class="miniatura" src="${esc(v)}" alt="">` : ''}<div style="display:flex;gap:8px"><input type="text" ${at} value="${esc(v && v.startsWith('data:') ? '(imagem enviada)' : v)}" placeholder="img/arquivo.webp ou https://…" style="flex:1"><label class="btn btn--sm btn--g">${ic('image')}Enviar<input type="file" accept="image/*" hidden data-upload="${p}"></label></div><span class="dica">Imagem horizontal, de preferência 1600 × 1000 px.</span></div>`;
+      case 'fixo': return `<div class="campo${larg}"><span class="rot">${f.label}</span><div class="fixo num" title="A numeração é automática e não pode ser alterada">${esc(v || '—')}</div>${dica}</div>`;
       case 'subtitulo': return `<div class="subtit">${f.label}</div>`;
       case 'escolha': {
         const ops = f.opcoes(); const sel = v || [];
@@ -143,7 +144,7 @@
         F('cliente.cidade', 'Cidade', 'text', { w: 'm3' }),
         F('cliente.whatsapp', 'WhatsApp', 'text', { w: 'm3', input: 'tel', ph: '(48) 99999-9999' }),
         F('cliente.email', 'E-mail', 'text', { w: 'm3', input: 'email' }),
-        F('numero', 'Número', 'text', { w: 'm2' }),
+        F('numero', 'Número', 'fixo', { w: 'm2', dica: 'Automático' }),
         F('data', 'Data', 'data', { w: 'm2' }),
         F('validadeDias', 'Validade (dias)', 'numero', { w: 'm2' })
       ] },
@@ -246,7 +247,7 @@
   /* ---------- Login ---------- */
   function telaLogin() {
     $('#nav').hidden = true;
-    tela.innerHTML = `<div class="login"><form id="f-login"><img src="img/logo-branco.png" alt="Wildner Design" style="height:22px;align-self:flex-start"><h1>Entrar</h1><p>Painel de orçamentos.</p>
+    tela.innerHTML = `<div class="login"><form id="f-login"><span class="login__logo">${WD.logo()}</span><h1>Entrar</h1><p>Painel de orçamentos.</p>
       <div class="campo"><label for="l-email">E-mail</label><input type="email" id="l-email" autocomplete="username" required></div>
       <div class="campo"><label for="l-senha">Senha</label><input type="password" id="l-senha" autocomplete="current-password" required></div>
       <span class="erro" id="l-erro" hidden></span><button class="btn btn--p" type="submit">Entrar</button></form></div>`;
@@ -341,7 +342,7 @@
     dlg.querySelector('[data-tipo="website"]').onclick = async () => {
       dlg.close();
       const o = WD.novoOrcamentoWebsite(cfg);
-      o.numero = WD.proximoNumero(lista);
+      o.numero = await WD.proximoNumero(lista);
       try { const s = await WD.store.salvar(o); location.hash = '#/o/' + s.id; } catch (e) { erro(e); }
     };
   }
@@ -349,7 +350,7 @@
   async function duplicar(id) {
     try {
       const o = await WD.store.obter(id); delete o.id;
-      Object.assign(o, { numero: WD.proximoNumero(lista), status: 'rascunho', escolha: null, data: new Date().toISOString().slice(0, 10), enviadoEm: null, vistoEm: null });
+      Object.assign(o, { numero: await WD.proximoNumero(lista), status: 'rascunho', escolha: null, data: new Date().toISOString().slice(0, 10), enviadoEm: null, vistoEm: null });
       o.cliente = Object.assign({}, o.cliente, { empresa: (o.cliente.empresa || '') + ' (cópia)' });
       const s = await WD.store.salvar(o); toast('Orçamento duplicado'); location.hash = '#/o/' + s.id;
     } catch (e) { erro(e); }
@@ -398,7 +399,7 @@
     $('#campos').addEventListener('toggle', e => { const d = e.target; if (d.dataset && d.dataset.sec) { d.open ? abertasEd.add(d.dataset.sec) : abertasEd.delete(d.dataset.sec); if (d.open) irPara(d.dataset.sec); } }, true);
     $('#ed-status').onchange = e => { atual.status = e.target.value; e.target.dataset.s = atual.status; mudou(); };
     $('#enviar').onclick = abrirEnvio;
-    $('#pdf').onclick = gerarPDF;
+    $('#pdf').onclick = menuPDF;
     $('#ver-prev').onclick = () => { $('#editor').classList.add('ver-prev'); $('#fechar-prev').hidden = false; escalar(); };
     $('#fechar-prev').onclick = () => { $('#editor').classList.remove('ver-prev'); $('#fechar-prev').hidden = true; };
     $$('[data-prev]').forEach(b => b.onclick = () => { modoPrev = b.dataset.prev; $$('[data-prev]').forEach(x => x.classList.toggle('on', x === b)); escalar(); });
@@ -406,6 +407,7 @@
     montarPreview();
     window.addEventListener('resize', escalar);
   }
+  document.addEventListener('wd-tema', () => { if (atual) atualizarPreview(); });
 
   /* Seção do formulário → seção da proposta */
   const MAPA_SEC = { cliente: 'capa', capa: 'capa', objetivo: 'objetivo', escopo: 'escopo', etapas: 'processo', valores: 'investimento', incluso: 'incluso', prova: 'portfolio', condicoes: 'condicoes' };
@@ -445,7 +447,8 @@
   function atualizarPreview() {
     const f = $('#frame'); if (!f) return; const d = f.contentDocument; const app = d && d.getElementById('app'); if (!app) return;
     const y = d.defaultView.scrollY;
-    app.innerHTML = WD.renderProposta(atual, cfg, {});
+    d.documentElement.dataset.tema = WD.tema();
+    app.innerHTML = WD.renderProposta(atual, cfg, { semTema: true });
     $$('a[href^="#"]', app).forEach(a => a.addEventListener('click', e => { e.preventDefault(); const t = d.querySelector(a.getAttribute('href')); if (t) d.defaultView.scrollTo({ top: t.offsetTop - 70, behavior: 'smooth' }); }));
     $$('a[target]', app).forEach(a => a.addEventListener('click', e => e.preventDefault()));
     WD.ligarProposta(app, atual, cfg, null);
@@ -486,7 +489,7 @@
       $('#env-ir').innerHTML = `${ic('send')}${canal === 'whats' ? 'Abrir WhatsApp' : 'Abrir e-mail'}`;
     });
     $('#env-copiar').onclick = async () => { try { await navigator.clipboard.writeText(linkCliente()); } catch (e) { $('#env-link').select(); document.execCommand('copy'); } toast('Link copiado'); marcarEnviado(); };
-    $('#env-pdf').onclick = gerarPDF;
+    $('#env-pdf').onclick = menuPDF;
     $('#env-ir').onclick = () => {
       if (canal === 'whats') { const n = foneCliente(); window.open(`https://wa.me/${n}?text=${encodeURIComponent($('#env-msg').value)}`, '_blank', 'noopener'); }
       else location.href = `mailto:${encodeURIComponent(atual.cliente.email || '')}?subject=${encodeURIComponent($('#env-assunto').value)}&body=${encodeURIComponent($('#env-corpo').value)}`;
@@ -498,16 +501,16 @@
   }
 
   /* PDF: imprime a pré-visualização (Salvar como PDF, A4) */
-  async function gerarPDF() {
+  async function gerarPDF(modo) {
     await salvarAgora();
     const f = $('#frame'); if (!f) return;
     const w = f.contentWindow; const d = f.contentDocument;
-    d.title = `Proposta ${atual.numero || ''} - ${atual.cliente.empresa || 'Wildner Design'}`;
+    d.title = `Proposta ${atual.numero || ''} - ${atual.cliente.empresa || 'Wildner Design'}${modo === 'pb' ? ' (impressão)' : ''}`;
     const t = document.title; document.title = d.title;
-    $$('.conds details', d).forEach(x => x.open = true);
-    w.focus(); w.print();
+    WD.imprimir(w, modo);
     document.title = t;
   }
+  const menuPDF = e => WD.menuPDF(e.currentTarget, gerarPDF);
 
   /* ---------- Configurações ---------- */
   let abertasCfg = new Set(['empresa']);

@@ -9,7 +9,11 @@ Regras visuais do sistema de orçamentos. Valem para o painel (`assets/admin.css
 3. **Fácil de entender em 30 segundos.** O valor, o prazo e o próximo passo devem estar visíveis sem precisar rolar.
 4. **O PDF é parte do produto.** Cada mudança na proposta é conferida também em A4.
 
-## Cores (tema escuro, único)
+## Cores
+
+Tem dois modos, escolhidos pelo botão de sol/lua no topo e lembrados no navegador. O **escuro** é o padrão. No **claro**, o fundo é branco e o destaque em texto vira cinza `#4D4C4E`; o verde continua só nos botões e formas.
+
+### Modo escuro
 
 | Token | Valor | Uso |
 | --- | --- | --- |
@@ -48,8 +52,10 @@ Status no painel: rascunho cinza, enviado lilás `#8f8fe8`, visualizado branco, 
 
 ## PDF (A4)
 
+- Duas versões: **colorido** (igual à tela, no modo escolhido) e **preto e branco** (fundo branco, sem fundos chapados, imagens em cinza, para imprimir).
 - Layout de computador reduzido (`zoom: .74`) para caber em A4 sem cair no layout de celular.
-- Capa sozinha com o logo no topo. Seções curtas dividem página: resumo + objetivo, incluso + depoimentos, condições + próximos passos.
+- Capa sozinha com o logo no topo. Depois o conteúdo corre direto, sem página meio vazia; blocos não se partem e títulos não ficam sozinhos no pé da página.
+- A cor do fundo da página, incluindo as margens, vem de `@page` e é ajustada pelo JS na hora de imprimir.
 - Todas as formas de pagamento e os opcionais aparecem, com a escolha atual destacada.
 
 ## Textos
