@@ -61,6 +61,7 @@
           <div class="campo"><span class="dica">Use as setas para mudar a ordem e a lixeira para tirar uma forma da proposta. Título ou descrição em branco usam o texto padrão. Atalhos: {desconto}, {entrada}, {parcelas}, {cartao}.</span></div>
           ${fora.length ? `<div class="add">${fora.map(k => `<button type="button" class="btn btn--sm btn--g" data-acao="pag" data-op="add" data-forma="${k}" data-lista="${p}">${ic('plus')}${WD.NOMES_PAG[k]}</button>`).join('')}</div>` : ''}</div>`;
       }
+      case 'comissao': return `<div class="campo"><div class="comissao" id="comissao-calc"></div></div>`;
       case 'subtitulo': return `<div class="subtit">${f.label}</div>`;
       case 'escolha': {
         const ops = f.opcoes(); const sel = v || [];
@@ -212,6 +213,12 @@
       ] },
       { id: 'condicoes', titulo: 'Condições gerais', desc: 'Prazos, ajustes e validade', campos: [
         F('condicoes', '', 'lista', { dica: 'Atalhos no texto: {suporte} dias de suporte, {hora} valor da hora, {validade} dias, {validoAte} data final.', campos: [F('titulo', 'Título', 'text'), F('texto', 'Texto', 'textarea', { rows: 3 })], novo: () => ({ titulo: '', texto: '' }), resumo: (x, i) => x.titulo || `Condição ${i + 1}`, catalogo: () => cfg.condicoes })
+      ] },
+      { id: 'interno', titulo: 'Interno', desc: 'Comissão e anotações. Não aparece para o cliente', campos: [
+        F('interno.comissaoPara', 'Comissão para', 'text', { w: 'm4', ph: 'Ex.: Flip Estratégia' }),
+        F('interno.comissaoPct', 'Comissão (%)', 'numero', { w: 'm2', step: 0.5 }),
+        F('', '', 'comissao'),
+        F('interno.obs', 'Anotações internas', 'textarea', { rows: 3, dica: 'Só você vê. Não vai para a proposta, o PDF nem o link do cliente.' })
       ] }
     ];
   }
@@ -437,6 +444,11 @@
   function titulo() {
     const t = $('#ed-tit'); if (t) t.textContent = atual.cliente.empresa || 'Novo orçamento';
     const v = $('#ed-valor'); if (v) v.textContent = `${atual.numero || ''} · R$ ${brl(WD.calcular(atual, atual.escolha).final, false)}`;
+    const cc = $('#comissao-calc');
+    if (cc) {
+      const it = atual.interno || {}; const pct = Number(it.comissaoPct || 0); const base = WD.calcular(atual, atual.escolha).final;
+      cc.innerHTML = pct > 0 ? `<span>Comissão${it.comissaoPara ? ' para <b>' + esc(it.comissaoPara) + '</b>' : ''}</span><b class="num">R$ ${brl(base * pct / 100)}</b><span>${pct}% de R$ ${brl(base)} · fica para a Wildner <b class="num">R$ ${brl(base - base * pct / 100)}</b></span>` : '<span>Sem comissão neste orçamento.</span>';
+    }
   }
 
   function mudou() {

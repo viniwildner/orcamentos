@@ -78,7 +78,7 @@ security definer
 set search_path = public
 as $$
   select jsonb_build_object(
-    'orcamento', o.dados || jsonb_build_object('id', o.id, 'status', o.status),
+    'orcamento', (o.dados - 'interno') || jsonb_build_object('id', o.id, 'status', o.status),
     'config', (select c.dados from configuracoes c where c.id = 1)
   )
   from orcamentos o
