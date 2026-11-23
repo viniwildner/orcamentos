@@ -27,6 +27,7 @@ WD.CONFIG_PADRAO = {
     imagemCapa: 'img/capa-celulares.webp',
     marcas: [
       { nome: 'Sicredi', logo: 'img/marcas/sicredi-2.webp' },
+      { nome: 'Unimed VTRP', logo: 'img/marcas/unimed-vtrp.svg' },
       { nome: 'CRON', logo: 'img/marcas/cron-1.webp' },
       { nome: 'Plastrela', logo: 'img/marcas/plastrela.webp' },
       { nome: 'Imobiliária Joner', logo: 'img/marcas/imobiliaria-joner.webp' },
@@ -47,7 +48,6 @@ WD.CONFIG_PADRAO = {
       { nome: 'Agrotech', logo: 'img/marcas/agrotech.webp' },
       { nome: 'Tempereasy', logo: 'img/marcas/tempereasy.webp' },
       { nome: 'Bela Vista Esquadrias', logo: 'img/marcas/bela-vistta-esquadrias-e-vidracaria.webp' },
-      { nome: 'Vovô Garoto', logo: 'img/marcas/vovo-garoto-restaurante-e-pizzaria.webp' },
       { nome: 'Carmelito e Beto', logo: 'img/marcas/carmelito-e-beto.webp' },
       { nome: "Viccenzo's Café", logo: 'img/marcas/viccezos-cafe.webp' }
     ]
