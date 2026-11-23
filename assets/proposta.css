@@ -231,7 +231,14 @@ main{min-width:0;max-width:1040px;padding-bottom:96px}
 .opcao .v{font:600 16px/1.2 var(--sans);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
 .extras{display:grid;gap:10px}
 .extras h3{font:600 17px/1.3 var(--sans);margin:0 0 4px}
-.extras p.ajuda{margin:0 0 6px;color:var(--texto-secundario);font-size:14.5px}
+.extras p.ajuda{margin:0 0 6px;color:var(--texto-secundario);font-size:14.5px;line-height:1.45}
+.extras p.ajuda b{color:var(--texto);font-weight:600}
+.extra .estado{display:inline-block;margin-top:8px;font:600 12.5px/1 var(--sans);letter-spacing:.01em}
+.extra .estado .e-add{display:inline-block;padding:5px 10px;border:1px dashed var(--borda-forte);border-radius:999px;color:var(--texto)}
+.extra .estado .e-ok{display:none;color:var(--destaque)}
+.extra.on .estado .e-add{display:none}
+.extra.on .estado .e-ok{display:inline}
+.extra:hover .estado .e-add{border-color:var(--verde)}
 .extra .marca{border-radius:var(--raio-sm)}
 .extra.on .marca::after{width:12px;height:7px;border-radius:0;background:none;border-left:2px solid var(--verde);border-bottom:2px solid var(--verde);transform:rotate(-45deg) translate(1px,-1px)}
 .extra .v small{display:block;font:400 12px/1.2 var(--sans);color:var(--texto-suave)}

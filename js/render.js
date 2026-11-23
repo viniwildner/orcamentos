@@ -204,8 +204,8 @@ window.WD = window.WD || {};
           </div>
         </div>
         ${(o.opcionais || []).length ? `<div class="extras">
-          <h3>Serviços opcionais</h3><p class="ajuda">Para deixar o site completo desde o primeiro dia.</p>
-          ${o.opcionais.map((op, i) => `<label class="opcao extra${c.marcados[i] ? ' on' : ''}" data-extra="${i}"><input type="checkbox"${c.marcados[i] ? ' checked' : ''}><span class="marca"></span><span><b>${esc(op.nome)}</b><span class="d">${esc(op.desc)}</span></span><span class="v num">R$ ${brl(op.valor, false)}${op.tipo === 'mensal' ? '<small>por mês</small>' : ''}</span></label>`).join('')}
+          <h3>Serviços opcionais</h3><p class="ajuda so-tela"><b>Você escolhe:</b> toque para marcar os serviços que quer incluir ou desmarcar os que não quer. O total se atualiza na hora.</p><p class="ajuda so-print">Serviços que podem ser incluídos no projeto. Os marcados já estão somados no total.</p>
+          ${o.opcionais.map((op, i) => `<label class="opcao extra${c.marcados[i] ? ' on' : ''}" data-extra="${i}"><input type="checkbox"${c.marcados[i] ? ' checked' : ''}><span class="marca"></span><span><b>${esc(op.nome)}</b><span class="d">${esc(op.desc)}</span><span class="estado so-tela"><span class="e-add">+ Adicionar</span><span class="e-ok">Incluído · toque para remover</span></span></span><span class="v num">R$ ${brl(op.valor, false)}${op.tipo === 'mensal' ? '<small>por mês</small>' : ''}</span></label>`).join('')}
           <div class="mensal"><span>Mensalidade a partir da publicação</span><b data-mensal></b></div>
         </div>` : ''}
       </div>
