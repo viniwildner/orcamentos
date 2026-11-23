@@ -78,7 +78,7 @@ security definer
 set search_path = public
 as $$
   select jsonb_build_object(
-    'orcamento', (o.dados - 'interno') || jsonb_build_object('id', o.id, 'status', o.status),
+    'orcamento', (o.dados - 'interno' - 'historico') || jsonb_build_object('id', o.id, 'status', o.status),
     'config', (select c.dados from configuracoes c where c.id = 1)
   )
   from orcamentos o
@@ -93,7 +93,11 @@ set search_path = public
 as $$
   update orcamentos
      set status = 'visualizado',
-         dados = dados || jsonb_build_object('vistoEm', now()),
+         dados = jsonb_set(
+                   dados || jsonb_build_object('vistoEm', now()),
+                   '{historico}',
+                   coalesce(dados -> 'historico', '[]'::jsonb)
+                     || jsonb_build_array(jsonb_build_object('status', 'visualizado', 'em', now(), 'por', 'cliente'))),
          atualizado_em = now()
    where id = p_id and status = 'enviado';
 $$;
@@ -115,7 +119,15 @@ begin
     'aprovadoEm', case when p_escolha ? 'aprovadoEm' then to_jsonb(now()) end
   ));
   update orcamentos
-     set dados = jsonb_set(dados, '{escolha}', coalesce(dados -> 'escolha', '{}'::jsonb) || limpo),
+     set dados = jsonb_set(
+                   jsonb_set(dados, '{escolha}', coalesce(dados -> 'escolha', '{}'::jsonb) || limpo),
+                   '{historico}',
+                   coalesce(dados -> 'historico', '[]'::jsonb) || case
+                     when limpo ? 'aprovadoEm' and status <> 'aprovado'
+                       then jsonb_build_array(jsonb_build_object('status', 'aprovado', 'em', now(), 'por', 'cliente'))
+                     when not (limpo ? 'aprovadoEm') and status = 'enviado'
+                       then jsonb_build_array(jsonb_build_object('status', 'visualizado', 'em', now(), 'por', 'cliente'))
+                     else '[]'::jsonb end),
          status = case when limpo ? 'aprovadoEm' then 'aprovado'
                        when status = 'enviado' then 'visualizado'
                        else status end,

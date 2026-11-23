@@ -5,7 +5,7 @@ window.WD = window.WD || {};
 (function () {
   const clone = o => JSON.parse(JSON.stringify(o));
   const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 3 | 8)).toString(16); }));
-  const resumo = o => ({ id: o.id, numero: o.numero, cliente: (o.cliente && o.cliente.empresa) || '', contato: (o.cliente && o.cliente.contato) || '', status: o.status || 'rascunho', valor: Number(o.valorBase || 0), tipo: o.tipo || 'website', atualizado_em: o.atualizadoEm || o.data });
+  const resumo = o => WD.resumoOrc(o);
 
   /* ---------- Modo local (IndexedDB) ---------- */
   function abrirDB() {
@@ -38,10 +38,11 @@ window.WD = window.WD || {};
     async registrarEscolha(id, escolha) {
       const o = await this.obter(id); if (!o) return;
       o.escolha = Object.assign({}, o.escolha, escolha);
-      if (escolha.aprovadoEm) o.status = 'aprovado'; else if (o.status === 'enviado') o.status = 'visualizado';
+      if (escolha.aprovadoEm && o.status !== 'aprovado') { o.status = 'aprovado'; WD.registrar(o, 'aprovado', 'cliente'); }
+      else if (o.status === 'enviado') { o.status = 'visualizado'; WD.registrar(o, 'visualizado', 'cliente'); }
       await this.salvar(o);
     },
-    async marcarVisto(id) { const o = await this.obter(id); if (o && o.status === 'enviado') { o.status = 'visualizado'; o.vistoEm = new Date().toISOString(); await this.salvar(o); } }
+    async marcarVisto(id) { const o = await this.obter(id); if (o && o.status === 'enviado') { o.status = 'visualizado'; o.vistoEm = new Date().toISOString(); WD.registrar(o, 'visualizado', 'cliente'); await this.salvar(o); } }
   };
 
   /* ---------- Supabase ---------- */
@@ -55,8 +56,8 @@ window.WD = window.WD || {};
       async entrar(email, senha) { return ok(await sb.auth.signInWithPassword({ email, password: senha })).session; },
       async sair() { await sb.auth.signOut(); },
       async listar() {
-        const rows = ok(await sb.from('orcamentos').select('id,numero,cliente,status,valor,tipo,atualizado_em,dados->cliente->>contato').order('atualizado_em', { ascending: false }));
-        return rows.map(r => ({ ...r, contato: r.contato || '' }));
+        const rows = ok(await sb.from('orcamentos').select('id,status,atualizado_em,dados').order('atualizado_em', { ascending: false }));
+        return rows.map(r => Object.assign(resumo(Object.assign(r.dados || {}, { id: r.id, status: r.status, atualizadoEm: r.atualizado_em })), { atualizado_em: r.atualizado_em }));
       },
       async obter(id) { const r = ok(await sb.from('orcamentos').select('id,dados,status').eq('id', id).maybeSingle()); return r ? Object.assign(r.dados, { id: r.id, status: r.status }) : null; },
       async salvar(o) { o = clone(o); if (!o.id) o.id = uuid(); o.atualizadoEm = new Date().toISOString(); ok(await sb.from('orcamentos').upsert(linha(o))); return o; },

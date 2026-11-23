@@ -49,6 +49,71 @@ window.WD = window.WD || {};
     return { total, linhas, mensal, forma, formas, desc, avista, entrada, nParc, parcela, nCartao, cartao, final, marcados };
   };
 
+  /* ---------- Andamento: histórico de status, comissão e prazo ---------- */
+  WD.NOMES_STATUS = { criado: 'Criado', rascunho: 'Rascunho', enviado: 'Enviado', visualizado: 'Visualizado', aprovado: 'Aprovado', recusado: 'Recusado' };
+  /* Acrescenta um evento ao histórico do orçamento (não repete o mesmo status seguido) */
+  WD.registrar = function (o, status, por) {
+    o.historico = Array.isArray(o.historico) ? o.historico : WD.historico(o);
+    const ult = o.historico[o.historico.length - 1];
+    if (ult && ult.status === status) return;
+    o.historico.push({ status, em: new Date().toISOString(), por: por || 'voce' });
+  };
+  /* Histórico completo: o que foi gravado + datas antigas (data, enviadoEm, vistoEm, aprovadoEm) */
+  WD.historico = function (o) {
+    const h = (Array.isArray(o.historico) ? o.historico : []).filter(e => e && e.status && e.em).map(e => Object.assign({}, e));
+    const tem = s => h.some(e => e.status === s);
+    const add = (status, em, por) => { if (em && !tem(status)) h.push({ status, em: String(em), por, derivado: true }); };
+    add('criado', o.criadoEm || (o.data ? o.data + 'T12:00:00' : null), 'voce');
+    add('enviado', o.enviadoEm, 'voce');
+    add('visualizado', o.vistoEm, 'cliente');
+    add('aprovado', o.escolha && o.escolha.aprovadoEm, 'cliente');
+    return h.sort((a, b) => new Date(a.em) - new Date(b.em));
+  };
+  /* Data em que o orçamento entrou no status atual */
+  WD.dataStatus = function (o, h) {
+    h = h || WD.historico(o);
+    const st = o.status || 'rascunho';
+    for (let i = h.length - 1; i >= 0; i--) if (h[i].status === st || (st === 'rascunho' && h[i].status === 'criado')) return h[i].em;
+    return o.atualizadoEm || null;
+  };
+  /* Comissão sobre o valor que o cliente paga na forma escolhida (ou a padrão) */
+  WD.comissao = function (o) {
+    const c = WD.calcular(o, o.escolha);
+    const it = o.interno || {}; const pct = Number(it.comissaoPct || 0);
+    const valor = pct > 0 ? c.final * pct / 100 : 0;
+    return { pct, para: it.comissaoPara || '', valor, bruto: c.final, liquido: c.final - valor, forma: c.forma, mensal: c.mensal };
+  };
+  /* Cronograma com datas reais: começa na aprovação (ou na data de início definida) */
+  const diaISO = d => { const x = new Date(d); return new Date(x.getTime() - x.getTimezoneOffset() * 60000).toISOString().slice(0, 10); };
+  const somaDias = (iso, n) => { const d = new Date(iso + 'T12:00:00'); d.setDate(d.getDate() + n); return diaISO(d); };
+  WD.cronograma = function (o, h) {
+    h = h || WD.historico(o);
+    const ap = [...h].reverse().find(e => e.status === 'aprovado');
+    const inicio = (o.interno && o.interno.inicio) || (ap ? diaISO(ap.em) : null);
+    if (!inicio) return null;
+    const etapas = (o.etapas || []).map(e => {
+      const ini = Number(e.inicio || 1), dur = Math.max(1, Number(e.duracao || 1));
+      return { nome: e.nome, tipo: e.tipo, de: somaDias(inicio, (ini - 1) * 7), ate: somaDias(inicio, (ini + dur - 1) * 7 - 1) };
+    });
+    const entrega = etapas.length ? etapas.map(e => e.ate).sort().pop() : somaDias(inicio, WD.semanasTotais(o) * 7 - 1);
+    return { inicio, entrega, etapas, semanas: WD.semanasTotais(o), manual: !!(o.interno && o.interno.inicio) };
+  };
+  WD.diasAte = iso => Math.round((new Date(iso + 'T12:00:00') - new Date(diaISO(new Date()) + 'T12:00:00')) / 86400000);
+  /* Resumo usado na lista e no painel */
+  WD.resumoOrc = function (o) {
+    const h = WD.historico(o);
+    const com = WD.comissao(o);
+    const st = o.status || 'rascunho';
+    const crono = st === 'aprovado' ? WD.cronograma(o, h) : null;
+    return {
+      id: o.id, numero: o.numero, cliente: (o.cliente && o.cliente.empresa) || '', contato: (o.cliente && o.cliente.contato) || '',
+      whatsapp: (o.cliente && o.cliente.whatsapp) || '', email: (o.cliente && o.cliente.email) || '',
+      status: st, tipo: o.tipo || 'website', valor: com.bruto, comissao: com.valor, comissaoPara: com.para, liquido: com.liquido, mensal: com.mensal,
+      historico: h, dataStatus: WD.dataStatus(o, h), entrega: crono && crono.entrega, inicio: crono && crono.inicio,
+      atualizado_em: o.atualizadoEm || o.data
+    };
+  };
+
   WD.FORMAS_PAG = ['avista', 'parcelado', 'cartao'];
   WD.NOMES_PAG = { avista: 'À vista no Pix', parcelado: 'Entrada + parcelas', cartao: 'Cartão de crédito' };
   WD.ordemPagamento = function (p) {

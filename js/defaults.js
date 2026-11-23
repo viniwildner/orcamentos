@@ -129,6 +129,8 @@ WD.novoOrcamentoWebsite = function (cfg) {
     status: 'rascunho',
     numero: '',
     data: hoje.toISOString().slice(0, 10),
+    criadoEm: hoje.toISOString(),
+    historico: [{ status: 'criado', em: hoje.toISOString(), por: 'voce' }],
     validadeDias: cfg.validadeDias,
     cliente: { empresa: '', contato: '', email: '', whatsapp: '', cidade: '' },
     titulo: 'Um novo site para a {cliente}',

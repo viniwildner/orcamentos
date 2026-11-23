@@ -62,6 +62,7 @@
           ${fora.length ? `<div class="add">${fora.map(k => `<button type="button" class="btn btn--sm btn--g" data-acao="pag" data-op="add" data-forma="${k}" data-lista="${p}">${ic('plus')}${WD.NOMES_PAG[k]}</button>`).join('')}</div>` : ''}</div>`;
       }
       case 'comissao': return `<div class="campo"><div class="comissao" id="comissao-calc"></div></div>`;
+      case 'andamento': return `<div class="campo"><div class="andamento" id="andamento-box"></div></div>`;
       case 'subtitulo': return `<div class="subtit">${f.label}</div>`;
       case 'escolha': {
         const ops = f.opcoes(); const sel = v || [];
@@ -219,6 +220,10 @@
         F('interno.comissaoPct', 'Comissão (%)', 'numero', { w: 'm2', step: 0.5 }),
         F('', '', 'comissao'),
         F('interno.obs', 'Anotações internas', 'textarea', { rows: 3, dica: 'Só você vê. Não vai para a proposta, o PDF nem o link do cliente.' })
+      ] },
+      { id: 'andamento', titulo: 'Andamento e prazos', desc: 'Histórico de status e datas de entrega. Interno', campos: [
+        F('', '', 'andamento'),
+        F('interno.inicio', 'Início do projeto', 'data', { w: 'm3', dica: 'Em branco, o prazo conta a partir da aprovação.' })
       ] }
     ];
   }
@@ -298,13 +303,33 @@
     if (min < 60 * 24 * 7) { const dd = Math.round(min / 1440); return dd === 1 ? 'ontem' : `há ${dd} dias`; }
     return fmtData(d.toISOString().slice(0, 10));
   }
+  /* Gráfico: valor enviado x aprovado por mês (data de cada status no histórico) */
+  function graficoMeses(lista) {
+    const meses = []; const hoje = new Date();
+    for (let i = 5; i >= 0; i--) { const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1); meses.push({ k: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`, nome: d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', ''), env: 0, apr: 0, com: 0, nE: 0, nA: 0 }); }
+    const mes = iso => { const d = new Date(iso); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; };
+    lista.forEach(x => (x.historico || []).forEach(e => {
+      const m = meses.find(mm => mm.k === mes(e.em)); if (!m) return;
+      if (e.status === 'enviado') { m.env += x.valor; m.nE++; }
+      if (e.status === 'aprovado' && x.status === 'aprovado') { m.apr += x.valor; m.com += x.comissao; m.nA++; }
+    }));
+    const max = Math.max(1, ...meses.map(m => Math.max(m.env, m.apr)));
+    const k = v => v >= 1000 ? (v / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + ' mil' : brl(v, false);
+    const tot = meses.reduce((a, m) => ({ env: a.env + m.env, apr: a.apr + m.apr, com: a.com + m.com }), { env: 0, apr: 0, com: 0 });
+    return `<div class="pn-cab"><h2 class="pn-t">Últimos 6 meses</h2><ul class="legenda"><li><i class="f--enviado"></i>Enviado <b class="num">R$ ${brl(tot.env, false)}</b></li><li><i class="f--aprovado"></i>Aprovado <b class="num">R$ ${brl(tot.apr, false)}</b></li><li><i class="f--comissao"></i>Comissão <b class="num">R$ ${brl(tot.com, false)}</b></li></ul></div>
+      <div class="barras" role="img" aria-label="${meses.map(m => `${m.nome}: enviado R$ ${brl(m.env, false)}, aprovado R$ ${brl(m.apr, false)}`).join('; ')}">
+      ${meses.map(m => `<div class="mes"><div class="cols">
+        <i class="b f--enviado" style="height:${m.env / max * 100}%" title="Enviado em ${m.nome}: R$ ${brl(m.env, false)} (${m.nE})">${m.env ? `<em>${k(m.env)}</em>` : ''}</i>
+        <i class="b f--aprovado" style="height:${m.apr / max * 100}%" title="Aprovado em ${m.nome}: R$ ${brl(m.apr, false)} (${m.nA}), comissão R$ ${brl(m.com, false)}">${m.apr ? `<em>${k(m.apr)}</em>` : ''}${m.com ? `<s class="f--comissao" style="height:${m.com / m.apr * 100}%"></s>` : ''}</i>
+      </div><span>${m.nome}</span></div>`).join('')}</div>`;
+  }
   let filtro = 'todos', busca = '';
   async function telaLista() {
     marcarNav('lista');
     tela.innerHTML = `<div class="pagina"><p style="color:var(--texto-3)">Carregando…</p></div>`;
     try { lista = await WD.store.listar(); } catch (e) { return erro(e); }
     lista.sort((a, b) => String(b.atualizado_em).localeCompare(String(a.atualizado_em)));
-    const soma = arr => arr.reduce((n, x) => n + Number(x.valor || 0), 0);
+    const soma = (arr, k) => arr.reduce((n, x) => n + Number(x[k || 'valor'] || 0), 0);
     const abertos = lista.filter(x => x.status === 'enviado' || x.status === 'visualizado');
     const aprov = lista.filter(x => x.status === 'aprovado');
     const decididos = lista.filter(x => x.status === 'aprovado' || x.status === 'recusado').length;
@@ -312,6 +337,8 @@
     const funil = ['enviado', 'visualizado', 'aprovado', 'recusado'].map(s => [s, soma(lista.filter(x => x.status === s))]);
     const totalFunil = funil.reduce((n, [, v]) => n + v, 0);
     const conta = s => s === 'todos' ? lista.length : lista.filter(x => x.status === s).length;
+    const comAprov = soma(aprov, 'comissao'), comAbertos = soma(abertos, 'comissao');
+    const entregas = aprov.filter(x => x.entrega).sort((a, b) => a.entrega.localeCompare(b.entrega));
     tela.innerHTML = `<div class="pagina">
       <div class="cab-pag"><div><p class="sobretitulo">${saudacao()}, ${esc((cfg.empresa.responsavel || '').split(' ')[0] || 'Marcus')}</p><h1>Orçamentos</h1></div>
         <div class="acoes"><button class="btn btn--p" id="novo">${ic('plus')}Novo orçamento</button></div></div>
@@ -319,13 +346,19 @@
       <section class="painel-num" aria-label="Resumo">
         <div class="nums">
           <div class="met"><span>Em negociação</span><b class="num">R$ ${brl(soma(abertos), false)}</b><small>${abertos.length} ${abertos.length === 1 ? 'proposta enviada' : 'propostas enviadas'}</small></div>
-          <div class="met met--verde"><span>Aprovado</span><b class="num">R$ ${brl(soma(aprov), false)}</b><small>${aprov.length} ${aprov.length === 1 ? 'proposta' : 'propostas'}</small></div>
-          <div class="met"><span>Taxa de aprovação</span><b class="num">${taxa}</b><small>entre aprovadas e recusadas</small></div>
-          <div class="met"><span>Rascunhos</span><b class="num">${conta('rascunho')}</b><small>ainda não enviados</small></div>
+          <div class="met met--verde"><span>Aprovado</span><b class="num">R$ ${brl(soma(aprov), false)}</b><small>R$ ${brl(soma(aprov, 'liquido'), false)} líquido, sem comissões</small></div>
+          <div class="met met--coral"><span>Comissões</span><b class="num">R$ ${brl(comAprov, false)}</b><small>dos aprovados${comAbertos ? ` · + R$ ${brl(comAbertos, false)} em negociação` : ''}</small></div>
+          <div class="met"><span>Taxa de aprovação</span><b class="num">${taxa}</b><small>${aprov.length} de ${decididos} decididas</small></div>
         </div>
         ${totalFunil ? `<div class="funil" role="img" aria-label="Valor por status">${funil.filter(([, v]) => v).map(([s, v]) => `<i class="f--${s}" style="flex:${v}" title="${STATUS[s]}: R$ ${brl(v, false)}"></i>`).join('')}</div>
         <ul class="legenda">${funil.filter(([, v]) => v).map(([s, v]) => `<li><i class="f--${s}"></i>${STATUS[s]} <b class="num">R$ ${brl(v, false)}</b></li>`).join('')}</ul>` : ''}
       </section>
+      <div class="painel-duplo">
+        <section class="painel-num grafico" aria-label="Últimos 6 meses">${graficoMeses(lista)}</section>
+        <section class="painel-num entregas" aria-label="Próximas entregas"><h2 class="pn-t">Próximas entregas</h2>
+          ${entregas.length ? `<ul>${entregas.slice(0, 5).map(x => { const n = WD.diasAte(x.entrega); return `<li><a href="#/o/${x.id}"><b>${esc(x.cliente || 'Sem nome')}</b><span>Começou em ${fmtData(x.inicio)}</span></a><span class="ent${n < 0 ? ' atraso' : n <= 7 ? ' perto' : ''}"><b class="num">${fmtData(x.entrega)}</b><small>${faltam(x.entrega)}</small></span></li>`; }).join('')}</ul>` : '<p class="pn-vazio">Quando um cliente aprovar, o prazo de entrega aparece aqui.</p>'}
+        </section>
+      </div>
       <div class="filtros">${['todos', ...Object.keys(STATUS)].map(s => `<button class="chip${filtro === s ? ' on' : ''}" data-filtro="${s}">${s === 'todos' ? 'Todos' : STATUS[s]}<span class="num">${conta(s)}</span></button>`).join('')}
         <input class="busca" type="search" placeholder="Buscar cliente ou número" value="${esc(busca)}" id="busca"></div>
       <div class="lista" id="lista"></div>
@@ -342,14 +375,20 @@
     const el = $('#lista');
     if (!lista.length) { el.innerHTML = `<div class="vazio"><h2>Nenhum orçamento ainda</h2><p>Crie o primeiro. Ele já vem preenchido com os seus padrões.</p><p style="margin-top:16px"><button class="btn btn--p" onclick="document.getElementById('novo').click()">${ic('plus')}Novo orçamento</button></p></div>`; return; }
     if (!itens.length) { el.innerHTML = `<div class="vazio">Nada encontrado com esse filtro.</div>`; return; }
-    el.innerHTML = `<div class="linha-o cab"><span>Cliente</span><span class="col-num">Nº</span><span class="col-status">Status</span><span class="col-data">Atualizado</span><span class="col-valor">Valor</span><span></span></div>` +
+    el.innerHTML = `<div class="linha-o cab"><span>Cliente</span><span class="col-num">Nº</span><span class="col-status">Status</span><span class="col-valor">Valor</span><span class="col-data">Entrega</span><span class="col-acts">Ações</span></div>` +
       itens.map(x => `<div class="linha-o" data-id="${x.id}" tabindex="0" role="button" aria-label="Abrir ${esc(x.cliente || 'orçamento')}">
         <span class="cli"><i class="av" aria-hidden="true">${esc(iniciais(x.cliente))}</i><span><b>${esc(x.cliente || 'Sem nome')}</b><span>${esc(x.contato || 'Website')}</span></span></span>
         <span class="col-num num">${esc(x.numero || '—')}</span>
-        <span class="col-status"><span class="status status--${x.status}">${STATUS[x.status] || x.status}</span></span>
-        <span class="col-data">${quando(x.atualizado_em)}</span>
-        <span class="col-valor num">R$ ${brl(x.valor, false)}</span>
-        <span class="acts"><button class="icone-btn" title="Duplicar" aria-label="Duplicar" data-dup="${x.id}">${ic('copy')}</button><button class="icone-btn perigo" title="Excluir" aria-label="Excluir" data-del="${x.id}">${ic('trash')}</button></span></div>`).join('');
+        <span class="col-status"><span class="status status--${x.status}">${STATUS[x.status] || x.status}</span><small class="num" title="${x.dataStatus ? esc(new Date(x.dataStatus).toLocaleString('pt-BR')) : ''}">${x.dataStatus ? 'em ' + new Date(x.dataStatus).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : ''}</small></span>
+        <span class="col-valor num">R$ ${brl(x.valor, false)}${x.comissao ? `<small title="Comissão${x.comissaoPara ? ' para ' + esc(x.comissaoPara) : ''}">com. R$ ${brl(x.comissao, false)}</small>` : ''}</span>
+        <span class="col-data">${x.entrega ? (() => { const n = WD.diasAte(x.entrega); return `<b class="num${n < 0 ? ' atraso' : n <= 7 ? ' perto' : ''}">${fmtData(x.entrega)}</b><small>${faltam(x.entrega)}</small>`; })() : `<small>${x.status === 'aprovado' ? '—' : 'após aprovar'}</small>`}</span>
+        <span class="acts">
+          <button class="icone-btn" title="Enviar no WhatsApp" aria-label="Enviar no WhatsApp" data-acao-l="whats" data-id-l="${x.id}">${ic('whats')}</button>
+          <button class="icone-btn" title="Enviar por e-mail" aria-label="Enviar por e-mail" data-acao-l="email" data-id-l="${x.id}">${ic('mail')}</button>
+          <button class="icone-btn" title="Baixar PDF" aria-label="Baixar PDF" data-acao-l="pdf" data-id-l="${x.id}">${ic('download')}</button>
+          <button class="icone-btn" title="Duplicar" aria-label="Duplicar" data-dup="${x.id}">${ic('copy')}</button>
+          <button class="icone-btn perigo" title="Excluir" aria-label="Excluir" data-del="${x.id}">${ic('trash')}</button></span></div>`).join('');
+    $$('[data-acao-l]', el).forEach(b => b.onclick = () => acaoLista(b.dataset.idL, b.dataset.acaoL, b));
     $$('.linha-o[data-id]', el).forEach(r => {
       r.onclick = e => { if (e.target.closest('button')) return; location.hash = '#/o/' + r.dataset.id; };
       r.onkeydown = e => { if (e.key === 'Enter') location.hash = '#/o/' + r.dataset.id; };
@@ -378,7 +417,8 @@
   async function duplicar(id) {
     try {
       const o = await WD.store.obter(id); delete o.id;
-      Object.assign(o, { numero: await WD.proximoNumero(lista), status: 'rascunho', escolha: null, data: new Date().toISOString().slice(0, 10), enviadoEm: null, vistoEm: null });
+      Object.assign(o, { numero: await WD.proximoNumero(lista), status: 'rascunho', escolha: null, data: new Date().toISOString().slice(0, 10), criadoEm: new Date().toISOString(), enviadoEm: null, vistoEm: null, historico: [{ status: 'criado', em: new Date().toISOString(), por: 'voce' }] });
+      if (o.interno) delete o.interno.inicio;
       o.cliente = Object.assign({}, o.cliente, { empresa: (o.cliente.empresa || '') + ' (cópia)' });
       const s = await WD.store.salvar(o); toast('Orçamento duplicado'); location.hash = '#/o/' + s.id;
     } catch (e) { erro(e); }
@@ -425,7 +465,7 @@
     desenhar();
     ligarForm($('#campos'), () => atual, secoes, mudou, desenhar);
     $('#campos').addEventListener('toggle', e => { const d = e.target; if (d.dataset && d.dataset.sec) { d.open ? abertasEd.add(d.dataset.sec) : abertasEd.delete(d.dataset.sec); if (d.open) irPara(d.dataset.sec); } }, true);
-    $('#ed-status').onchange = e => { atual.status = e.target.value; e.target.dataset.s = atual.status; mudou(); };
+    $('#ed-status').onchange = e => { atual.status = e.target.value; e.target.dataset.s = atual.status; WD.registrar(atual, atual.status, 'voce'); mudou(); };
     $('#enviar').onclick = abrirEnvio;
     $('#pdf').onclick = menuPDF;
     $('#ver-prev').onclick = () => { $('#editor').classList.add('ver-prev'); $('#fechar-prev').hidden = false; escalar(); };
@@ -444,6 +484,7 @@
   function titulo() {
     const t = $('#ed-tit'); if (t) t.textContent = atual.cliente.empresa || 'Novo orçamento';
     const v = $('#ed-valor'); if (v) v.textContent = `${atual.numero || ''} · R$ ${brl(WD.calcular(atual, atual.escolha).final, false)}`;
+    const ab = $('#andamento-box'); if (ab) ab.innerHTML = andamentoHTML(atual);
     const cc = $('#comissao-calc');
     if (cc) {
       const it = atual.interno || {}; const pct = Number(it.comissaoPct || 0);
@@ -462,6 +503,20 @@
     }
   }
 
+  function dataHora(iso) { const d = new Date(iso); return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }) + (String(iso).length > 10 && !/T12:00:00$/.test(iso) ? ' às ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : ''); }
+  function faltam(iso) { const n = WD.diasAte(iso); return n > 1 ? `faltam ${n} dias` : n === 1 ? 'falta 1 dia' : n === 0 ? 'é hoje' : n === -1 ? 'venceu ontem' : `venceu há ${-n} dias`; }
+  function andamentoHTML(o) {
+    const h = WD.historico(o);
+    const linhas = h.map(e => `<li class="ev ev--${e.status}"><i></i><span><b>${WD.NOMES_STATUS[e.status] || e.status}</b> ${e.por === 'cliente' ? '<em>pelo cliente</em>' : ''}</span><time class="num">${dataHora(e.em)}</time></li>`).join('');
+    const cr = (o.status === 'aprovado' || (o.interno && o.interno.inicio)) ? WD.cronograma(o, h) : null;
+    let prazo;
+    if (cr) prazo = `<div class="crono"><p class="cr-t">Prazo de ${cr.semanas} ${cr.semanas === 1 ? 'semana' : 'semanas'}, a partir de <b>${fmtData(cr.inicio)}</b>${cr.manual ? ' (data definida por você)' : ' (data da aprovação)'}${o.status !== 'aprovado' ? '. Previsão, a proposta ainda não foi aprovada.' : '.'}</p>
+      ${cr.etapas.map(e => `<div class="cr-l${e.tipo === 'final' ? ' fim' : ''}"><span>${esc(e.nome || 'Etapa')}</span><span class="num">${fmtData(e.de).replace(/\/\d{4}$/, '')} a ${fmtData(e.ate)}</span></div>`).join('')}
+      <div class="cr-l total"><span>Entrega final</span><span class="num"><b>${fmtData(cr.entrega)}</b> · ${faltam(cr.entrega)}</span></div></div>`;
+    else prazo = `<p class="cr-t">O cronograma com datas aparece quando a proposta for aprovada: ${WD.semanasTotais(o)} semanas contadas a partir da aprovação. Para simular, preencha o início abaixo.</p>`;
+    return `<ol class="tl">${linhas || '<li class="ev"><i></i><span>Sem registros ainda</span></li>'}</ol>${prazo}`;
+  }
+
   function mudou() {
     sujo = true; $('#salvo').textContent = 'Alterações não salvas';
     titulo();
@@ -471,7 +526,7 @@
   async function salvarAgora() {
     clearTimeout(timerSalvar);
     if (!sujo || !atual) return;
-    $('#salvo').textContent = 'Salvando…';
+    const sv = $('#salvo'); if (sv) sv.textContent = 'Salvando…';
     try { const s = await WD.store.salvar(atual); atual.id = s.id; sujo = false; const el = $('#salvo'); if (el) el.textContent = 'Salvo'; }
     catch (e) { erro(e); const el = $('#salvo'); if (el) el.textContent = 'Erro ao salvar'; }
   }
@@ -513,8 +568,8 @@
   }
   function foneCliente() { let n = String(atual.cliente.whatsapp || '').replace(/\D/g, ''); if (n && n.length <= 11) n = '55' + n; return n; }
 
-  async function abrirEnvio() {
-    await salvarAgora();
+  async function abrirEnvio(o, canalIni) {
+    if (o && o.id) { if (atual !== o) { await salvarAgora(); atual = o; sujo = false; } } else await salvarAgora();
     const m = cfg.mensagens || WD.CONFIG_PADRAO.mensagens;
     const local = WD.store.modo === 'local';
     dlg.innerHTML = `<div class="dlg"><h2>Enviar proposta</h2>
@@ -527,13 +582,14 @@
     dlg.showModal();
     let canal = 'whats';
     dlg.querySelector('[data-fechar]').onclick = () => dlg.close();
+    if (canalIni === 'email') setTimeout(() => { const b = dlg.querySelector('[data-canal="email"]'); if (b) b.click(); });
     $$('[data-canal]', dlg).forEach(b => b.onclick = () => {
       canal = b.dataset.canal; $$('[data-canal]', dlg).forEach(x => x.classList.toggle('on', x === b));
       $('#env-whats').hidden = canal !== 'whats'; $('#env-email').hidden = canal !== 'email';
       $('#env-ir').innerHTML = `${ic('send')}${canal === 'whats' ? 'Abrir WhatsApp' : 'Abrir e-mail'}`;
     });
     $('#env-copiar').onclick = async () => { try { await navigator.clipboard.writeText(linkCliente()); } catch (e) { $('#env-link').select(); document.execCommand('copy'); } toast('Link copiado'); marcarEnviado(); };
-    $('#env-pdf').onclick = menuPDF;
+    $('#env-pdf').onclick = e => $('#editor') ? menuPDF(e) : WD.menuPDF(e.currentTarget, m => pdfDe(atual, m));
     $('#env-ir').onclick = () => {
       if (canal === 'whats') { const n = foneCliente(); window.open(`https://wa.me/${n}?text=${encodeURIComponent($('#env-msg').value)}`, '_blank', 'noopener'); }
       else location.href = `mailto:${encodeURIComponent(atual.cliente.email || '')}?subject=${encodeURIComponent($('#env-assunto').value)}&body=${encodeURIComponent($('#env-corpo').value)}`;
@@ -541,7 +597,7 @@
     };
   }
   async function marcarEnviado() {
-    if (atual.status === 'rascunho') { atual.status = 'enviado'; atual.enviadoEm = new Date().toISOString(); const s = $('#ed-status'); if (s) { s.value = 'enviado'; s.dataset.s = 'enviado'; } sujo = true; await salvarAgora(); }
+    if (atual.status === 'rascunho') { atual.status = 'enviado'; atual.enviadoEm = new Date().toISOString(); WD.registrar(atual, 'enviado', 'voce'); const s = $('#ed-status'); if (s) { s.value = 'enviado'; s.dataset.s = 'enviado'; } sujo = true; await salvarAgora(); if (!$('#editor')) telaLista(); }
   }
 
   /* PDF: imprime a pré-visualização (Salvar como PDF, A4) */
@@ -555,6 +611,33 @@
     document.title = t;
   }
   const menuPDF = e => WD.menuPDF(e.currentTarget, gerarPDF);
+  /* PDF direto da lista: monta a proposta num quadro escondido e imprime */
+  async function pdfDe(o, modo) {
+    let f = $('#frame-pdf'); if (f) f.remove();
+    f = document.createElement('iframe'); f.id = 'frame-pdf'; f.title = 'PDF';
+    f.style.cssText = 'position:fixed;left:-10000px;top:0;width:1280px;height:900px;border:0';
+    document.body.appendChild(f);
+    f.onload = async () => {
+      const d = f.contentDocument, w = f.contentWindow;
+      d.documentElement.dataset.tema = WD.tema();
+      d.getElementById('app').innerHTML = WD.renderProposta(o, cfg, { semTema: true });
+      WD.ligarProposta(d.getElementById('app'), o, cfg, null);
+      try { await d.fonts.ready; } catch (e) { /* segue */ }
+      await Promise.all([...d.images].map(i => i.complete ? 0 : new Promise(r => { i.onload = i.onerror = r; })));
+      d.title = `Proposta ${o.numero || ''} - ${(o.cliente && o.cliente.empresa) || 'Wildner Design'}${modo === 'pb' ? ' (impressão)' : ''}`;
+      const t = document.title; document.title = d.title;
+      WD.imprimir(w, modo);
+      document.title = t;
+    };
+    f.srcdoc = docPreview();
+  }
+  async function acaoLista(id, tipo, botao) {
+    try {
+      const o = await WD.store.obter(id); if (!o) return;
+      if (tipo === 'pdf') WD.menuPDF(botao, m => pdfDe(o, m));
+      else abrirEnvio(o, tipo);
+    } catch (e) { erro(e); }
+  }
 
   /* ---------- Configurações ---------- */
   let abertasCfg = new Set(['empresa']);

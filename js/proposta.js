@@ -7,7 +7,7 @@
 
   let r;
   try { r = await WD.store.publico(id); } catch (e) { console.error(e); }
-  if (r && r.orcamento) delete r.orcamento.interno; // dados internos (comissão) nunca vão para o cliente
+  if (r && r.orcamento) { delete r.orcamento.interno; delete r.orcamento.historico; } // dados internos (comissão) nunca vão para o cliente
   if (!r) return aviso('Proposta não encontrada', 'Este link não está mais disponível. Fale com a gente pelo WhatsApp (51) 98019-9884.');
 
   const o = r.orcamento;
