@@ -511,7 +511,7 @@ html{accent-color:var(--verde);caret-color:var(--verde)}
 .ficha{grid-template-columns:repeat(4,auto);justify-content:start;max-width:none}
 .ficha dt,.ficha dd{white-space:nowrap}
 .ficha div{padding:2px 20px}
-@media screen and (max-width:860px){.ficha{grid-template-columns:repeat(2,auto)}.ficha div:nth-child(3){border-left:0;padding-left:0}}
+@media screen and (max-width:1100px){.ficha{grid-template-columns:repeat(2,auto)}.ficha div:nth-child(3){border-left:0;padding-left:0}}
 @media screen{.assin .linhas-a{display:none}}
 .estado-ap{display:flex;gap:10px;align-items:flex-start;margin:16px 0 0;padding:12px 14px;border-radius:var(--raio);background:var(--superficie-elevada);font-size:15px;line-height:1.45}
 .estado-ap .i{width:20px;height:20px;flex:none;color:var(--destaque);margin-top:1px}

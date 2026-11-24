@@ -41,7 +41,7 @@ WD.botaoTema = function () {
     '.tema-mini{display:none;width:40px;height:40px;flex:none;place-items:center;border-radius:999px;border:1px solid rgba(127,127,127,.3);background:transparent;color:inherit;cursor:pointer;padding:0}' +
     '.tema-mini svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}' +
     ':root[data-tema="claro"] .tema-mini .t-sol,:root[data-tema="escuro"] .tema-mini .t-lua{display:none}' +
-    '@media (max-width:860px){.tema-sw{display:none!important}.tema-mini{display:inline-grid}}' +
+    '@media (max-width:1279px){.tema-sw{display:none!important}.tema-mini{display:inline-grid}}' +
     '@media print{.tema-sw,.tema-mini{display:none!important}}';
   function montar() {
     if (document.querySelector('.tema-sw')) return;

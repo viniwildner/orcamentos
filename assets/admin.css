@@ -496,7 +496,7 @@ input::placeholder,textarea::placeholder{color:var(--texto-3);opacity:1}
 .pendencias{background:var(--superficie);border:1px solid var(--borda-sutil);border-radius:var(--raio);padding:18px 20px;margin-bottom:24px}
 .pendencias .pn-t{display:flex;align-items:center;gap:8px;margin:0 0 10px}
 .pendencias .pn-t .num{font:600 12px/1 var(--sans);padding:4px 8px;border-radius:999px;background:var(--ok-bg);color:var(--ok)}
-.pendencias ul{list-style:none;margin:0;padding:0;display:grid}
+.pendencias ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:minmax(0,1fr)}
 .pd{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--borda-sutil)}
 .pd:first-child{border-top:0}
 .pd-cli{display:flex;align-items:center;gap:12px;flex:1;min-width:0;color:inherit;text-decoration:none}
@@ -539,3 +539,12 @@ input::placeholder,textarea::placeholder{color:var(--texto-3);opacity:1}
   .filtros-linha .filtros{max-width:calc(100% + 32px)}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@media (max-width:640px){.linha-o .col-status small.pediu{display:flex;justify-content:flex-end}}
+/* Polimento: cabeçalho da lista uniforme; tablet com filtros em faixa única */
+.linha-o.cab .col-valor{font-weight:inherit}
+@media (min-width:641px) and (max-width:1100px){
+  .filtros-linha{flex-direction:column;align-items:stretch;gap:10px}
+  .filtros-linha .busca{order:-1;width:100%;max-width:none;margin-left:0}
+  .filtros-linha .filtros{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+  .filtros-linha .filtros .chip{flex:none}
+}
