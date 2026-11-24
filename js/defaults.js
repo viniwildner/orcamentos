@@ -154,6 +154,7 @@ WD.CONFIG_PADRAO = {
     { titulo: 'Validade da proposta', texto: 'Esta proposta vale por {validade} dias, até {validoAte}.' }
   ],
   mensagens: {
+    cobranca: 'Oi, {contato}! Tudo bem? Conseguiu dar uma olhada na proposta {numero}? Se tiver qualquer dúvida, me chama por aqui. O link é este: {link}',
     whatsapp: 'Olá, {contato}! Tudo bem? Aqui é o Marcus, da Wildner Design. Preparei a proposta do novo site da {empresa}. Você pode ver tudo, escolher a forma de pagamento e aprovar por este link: {link}\n\nQualquer dúvida, é só me chamar por aqui.',
     emailAssunto: 'Proposta {numero} · Novo site da {empresa}',
     emailCorpo: 'Olá, {contato}!\n\nSegue a proposta do novo site da {empresa}. No link abaixo você vê o escopo, o prazo e o investimento, escolhe a forma de pagamento e pode aprovar online:\n\n{link}\n\nSe preferir, a proposta também pode ser salva em PDF pelo botão no topo da página.\n\nFico à disposição.\n\nMarcus Vinicius Wildner\nWildner Design · (51) 98019-9884'

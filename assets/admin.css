@@ -1,7 +1,7 @@
 /* Painel interno de orçamentos · mesmo sistema visual da proposta (escuro, verde de destaque) */
 :root{
   --fundo:#111013; --superficie:#1b1a1d; --superficie-2:#242326; --superficie-3:#4d4c4e;
-  --texto:#fff; --texto-2:rgba(255,255,255,.75); --texto-3:#82838c;
+  --texto:#fff; --texto-2:rgba(255,255,255,.75); --texto-3:#9495a0;
   --verde:#0ffaa4; --verde-hover:#04dc8d; --sobre-verde:#111013; --coral:#ff6a3d;
   --borda:rgba(255,255,255,.2); --borda-sutil:rgba(255,255,255,.075);
   --raio:5.6px; --sans:"DM Sans",system-ui,sans-serif; --display:"Playfair Display",Georgia,serif;
@@ -17,7 +17,7 @@
   --fundo:#f6f6f7; --superficie:#ffffff; --superficie-2:#eeeef0; --superficie-3:#e1e1e4;
   --texto:#111013; --texto-2:rgba(17,16,19,.74); --texto-3:#6b6c73;
   --borda:rgba(17,16,19,.16); --borda-sutil:rgba(17,16,19,.08);
-  --destaque:#4d4c4e; --link:#07875a; --ok:#07875a; --ok-bg:rgba(7,135,90,.1);
+  --destaque:#4d4c4e; --link:#066b47; --ok:#066b47; --ok-bg:rgba(7,135,90,.1);
   --coral-texto:#b83a14; --coral-bg:rgba(255,106,61,.14);
   --st-enviado:#4b4bc4; --st-enviado-bg:rgba(91,91,214,.1); --st-enviado-barra:#7c7ce0;
   --st-visto-bg:rgba(17,16,19,.08); --st-visto-barra:#a9a9b0;
@@ -271,15 +271,16 @@ dialog::backdrop{background:rgba(0,0,0,.6)}
 @media (max-width:640px){
   .cab-pag{align-items:center}
   .cab-pag .acoes{margin-left:auto}
-  .cab-pag .acoes .btn{width:44px;padding:0;font-size:0;gap:0}
-  .cab-pag .acoes .btn svg{width:20px;height:20px}
+  .cab-pag .acoes #novo{width:44px;padding:0;font-size:0;gap:0}
+  .cab-pag .acoes #novo svg{width:20px;height:20px}
   .painel-num{padding:18px}
   .met{padding:0 0 0 16px}
   .met b{font-size:21px}
   .met small{font-size:12px}
   .filtros{flex-wrap:nowrap;overflow-x:auto;margin-inline:-16px;padding-inline:16px;scrollbar-width:none}
   .filtros .chip{flex:none}
-  .filtros .busca{flex:none;width:200px;margin-left:0}
+  .filtros-linha{flex-direction:column;align-items:stretch;gap:10px}
+  .filtros-linha .busca{order:-1;width:100%;max-width:none;height:44px;font-size:16px}
   .linha-o{grid-template-columns:minmax(0,1fr) auto;row-gap:2px;padding:12px 14px}
   .linha-o.cab{display:none}
   .linha-o .cli{grid-column:1;grid-row:1 / span 2}
@@ -328,8 +329,8 @@ dialog::backdrop{background:rgba(0,0,0,.6)}
 @media (min-width:861px){ .editor{padding-left:60px} }
 
 /* ---------- Painel: comissões, gráfico, entregas e ações na lista ---------- */
-.met--coral b{color:var(--coral-texto)}
-.f--comissao{background:var(--coral)}
+.met--neutro b{color:var(--texto)}
+.f--comissao{background:var(--texto-3)}
 .painel-duplo{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:16px;margin:-16px 0 32px}
 .painel-duplo .painel-num{margin:0}
 .pn-t{font:600 13px/1.3 var(--sans);text-transform:uppercase;letter-spacing:.06em;color:var(--texto-3);margin:0}
@@ -486,3 +487,43 @@ html{accent-color:var(--verde);caret-color:var(--verde)}
 .faixa-pedido b{display:block;font-size:14px}
 .faixa-pedido span{font-size:13px;color:var(--texto-2)}
 @media (max-width:560px){.faixa-pedido{grid-template-columns:auto minmax(0,1fr)}.faixa-pedido .btn{grid-column:1/-1}}
+
+/* ---------- Precisa de você ---------- */
+.filtros-linha{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.filtros-linha .filtros{flex:1;min-width:0;margin-bottom:0}
+.filtros-linha .busca{margin-left:auto;flex:none}
+input::placeholder,textarea::placeholder{color:var(--texto-3);opacity:1}
+.pendencias{background:var(--superficie);border:1px solid var(--borda-sutil);border-left:3px solid var(--ok);border-radius:var(--raio);padding:18px 20px;margin-bottom:24px}
+.pendencias .pn-t{display:flex;align-items:center;gap:8px;margin:0 0 10px}
+.pendencias .pn-t .num{font:600 12px/1 var(--sans);padding:4px 8px;border-radius:999px;background:var(--ok-bg);color:var(--ok)}
+.pendencias ul{list-style:none;margin:0;padding:0;display:grid}
+.pd{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--borda-sutil)}
+.pd:first-child{border-top:0}
+.pd-cli{display:flex;align-items:center;gap:12px;flex:1;min-width:0;color:inherit;text-decoration:none}
+.pd-cli>span{min-width:0}
+.pd-cli b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pd-cli>span>span{display:block;font-size:13px;color:var(--texto-2)}
+.pd--pedido .pd-cli>span>span{color:var(--ok);font-weight:600}
+.pd-cli:hover b{text-decoration:underline;text-underline-offset:3px}
+.pd .btn{flex:none}
+.pd .btn .i{width:16px;height:16px}
+.pd-mais{margin:8px 0 0;font-size:13px;color:var(--texto-3)}
+.pendencias--ok{display:flex;align-items:center;gap:10px;border-left-color:var(--borda);padding:12px 16px}
+.pendencias--ok p{margin:0;font-size:14px;color:var(--texto-2)}
+.pendencias--ok .pd-ic{color:var(--ok);display:grid}
+.painel-duplo{margin-top:32px}
+.faixa-pedido--info{background:var(--superficie-2);border-color:var(--borda)}
+.faixa-pedido--info .fp-ic{color:var(--ok)}
+@media (max-width:640px){
+  .pendencias{padding:14px 16px}
+  .pd .btn{height:40px}
+}
+
+/* Painel mais compacto: a lista sobe na tela */
+.painel-num{padding:18px 22px;margin-bottom:24px}
+.met b{font-size:24px;margin:6px 0 2px}
+@media (min-width:861px){
+  .filtros-linha{flex-wrap:wrap}
+  .filtros-linha .filtros{flex:0 1 auto}
+  .filtros-linha .busca{width:240px}
+}

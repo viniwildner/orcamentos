@@ -36,7 +36,11 @@
     const meio = d.length > 10 ? 7 : 6;
     return `(${d.slice(0, 2)}) ${d.slice(2, meio)}${d.length > meio ? '-' + d.slice(meio) : ''}`;
   }
-  function erro(e) { console.error(e); toast('Algo deu errado: ' + (e.message || e)); }
+  function erro(e) {
+    console.error(e);
+    const m = String((e && e.message) || e || '');
+    toast(/fetch|network|Failed to|conex/i.test(m) ? 'Sem conexão. Verifique a internet e tente de novo.' : /JWT|auth|session|permission|401|403/i.test(m) ? 'Sua sessão expirou. Entre de novo para continuar.' : 'Não deu certo. Tente de novo em instantes.', null, null, 5000);
+  }
 
   /* ---------- Caminhos (ex.: "cliente.empresa", "etapas.2.nome") ---------- */
   const ler = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);
@@ -331,7 +335,8 @@
       { id: 'condicoes', titulo: 'Condições gerais', desc: 'Texto padrão das condições', campos: [
         F('condicoes', '', 'lista', { dica: 'Atalhos: {suporte}, {hora}, {validade}, {validoAte}.', campos: [F('titulo', 'Título', 'text'), F('texto', 'Texto', 'textarea', { rows: 3 })], novo: () => ({ titulo: '', texto: '' }), resumo: (x, i) => x.titulo || `Condição ${i + 1}` })
       ] },
-      { id: 'mensagens', titulo: 'Mensagens de envio', desc: 'WhatsApp e e-mail', campos: [
+      { id: 'mensagens', titulo: 'Mensagens de envio', desc: 'WhatsApp, e-mail e cobrança', campos: [
+        F('mensagens.cobranca', 'Mensagem para cobrar resposta', 'textarea', { rows: 4, dica: 'Usada no botão Cobrar da faixa "Precisa de você". Atalhos: {contato}, {empresa}, {numero}, {link}.' }),
         F('mensagens.whatsapp', 'Mensagem do WhatsApp', 'textarea', { rows: 5, dica: 'Atalhos: {contato}, {empresa}, {numero}, {link}.' }),
         F('mensagens.emailAssunto', 'Assunto do e-mail', 'text'),
         F('mensagens.emailCorpo', 'Texto do e-mail', 'textarea', { rows: 8 })
@@ -364,6 +369,36 @@
     if (min < 60 * 24) return `há ${Math.round(min / 60)} h`;
     if (min < 60 * 24 * 7) { const dd = Math.round(min / 1440); return dd === 1 ? 'ontem' : `há ${dd} dias`; }
     return fmtData(d.toISOString().slice(0, 10));
+  }
+  /* Idade em dias, para saber quem cobrar */
+  const diasDesde = iso => iso ? Math.max(0, Math.floor((Date.now() - new Date(iso)) / 86400000)) : 0;
+  function ha(iso) { if (!iso) return ''; const d = diasDesde(iso); return d === 0 ? 'hoje' : d === 1 ? 'ontem' : `há ${d} dias`; }
+  const baseLink = () => location.href.replace(/[#?].*$/, '').replace(/[^/]*$/, '');
+  /* Fila "Precisa de você": pediu aprovação; viu e não respondeu (3+ dias); enviada e não aberta (5+ dias) */
+  function filaPendencias() {
+    const f = [];
+    lista.forEach(x => {
+      if (x.pedidoEm && x.status !== 'aprovado') f.push({ x, p: 0, tipo: 'pedido', txt: `Pediu aprovação ${ha(x.pedidoEm)}` });
+      else if (x.status === 'visualizado' && diasDesde(x.dataStatus) >= 3) f.push({ x, p: 1, tipo: 'cobrar', txt: `Viu a proposta ${ha(x.dataStatus)} e não respondeu` });
+      else if (x.status === 'enviado' && diasDesde(x.dataStatus) >= 5) f.push({ x, p: 2, tipo: 'cobrar', txt: `Recebeu ${ha(x.dataStatus)} e ainda não abriu` });
+    });
+    return f.sort((a, b) => a.p - b.p || String(a.x.dataStatus).localeCompare(String(b.x.dataStatus)));
+  }
+  function linkCobranca(x) {
+    let n = String(x.whatsapp || '').replace(/\D/g, ''); if (!n) return '';
+    if (n.length <= 11) n = '55' + n;
+    const modelo = (cfg.mensagens && cfg.mensagens.cobranca) || WD.CONFIG_PADRAO.mensagens.cobranca;
+    const txt = modelo.replace(/\{contato\}/g, (x.contato || '').split(' ')[0] || 'tudo bem').replace(/\{empresa\}/g, x.cliente || 'sua empresa').replace(/\{numero\}/g, x.numero || '').replace(/\{link\}/g, baseLink() + 'proposta.html?id=' + x.id);
+    return `https://wa.me/${n}?text=${encodeURIComponent(txt)}`;
+  }
+  function faixaPendencias() {
+    const f = filaPendencias();
+    if (!f.length) return lista.some(x => x.status !== 'rascunho') ? `<section class="pendencias pendencias--ok" aria-label="Precisa de você"><span class="pd-ic">${ic('check')}</span><p><b>Nada pendente.</b> Ninguém esperando por você agora.</p></section>` : '';
+    return `<section class="pendencias" aria-label="Precisa de você"><h2 class="pn-t">Precisa de você <span class="num">${f.length}</span></h2><ul>${f.slice(0, 6).map(({ x, tipo, txt }) => {
+      const cob = tipo === 'cobrar' ? linkCobranca(x) : '';
+      return `<li class="pd pd--${tipo}"><a class="pd-cli" href="#/o/${x.id}"><i class="av t--${esc(x.tipo || 'website')}" aria-hidden="true">${esc(iniciais(x.cliente))}</i><span><b>${esc(x.cliente || 'Sem nome')}</b><span>${esc(txt)} · R$ ${brl(x.valor, false)}</span></span></a>
+        ${tipo === 'pedido' ? `<a class="btn btn--sm btn--p" href="#/o/${x.id}">${ic('check')}Confirmar</a>` : cob ? `<a class="btn btn--sm btn--g" href="${esc(cob)}" target="_blank" rel="noopener">${ic('whatsapp')}Cobrar</a>` : `<a class="btn btn--sm btn--g" href="#/o/${x.id}">Abrir</a>`}</li>`;
+    }).join('')}</ul>${f.length > 6 ? `<p class="pd-mais">E mais ${f.length - 6}.</p>` : ''}</section>`;
   }
   /* Gráfico: valor enviado x aprovado por mês (data de cada status no histórico) */
   function graficoMeses(lista) {
@@ -406,28 +441,29 @@
     tela.innerHTML = `<div class="pagina">
       <div class="cab-pag"><div><p class="sobretitulo">${saudacao()}, ${esc((cfg.empresa.responsavel || '').split(' ')[0] || 'Marcus')}</p><h1>Orçamentos</h1></div>
         <div class="acoes"><button class="btn btn--p" id="novo">${ic('plus')}Novo orçamento</button></div></div>
-      ${WD.store.modo === 'local' ? `<p class="aviso-local"><span class="ponto"></span><span><b>Modo local.</b> Os dados ficam só neste navegador e o link do cliente não abre em outro aparelho. Conecte o Supabase para enviar links.</span></p>` : ''}
+      ${WD.store.modo === 'local' ? `<p class="aviso-local"><span class="ponto"></span><span><b>Modo local.</b> Os dados ficam só neste navegador e o link do cliente não abre em outro aparelho. Conecte o banco de dados online para enviar links.</span></p>` : ''}
+      ${semDados ? '' : faixaPendencias()}
       ${semDados ? `<section class="painel-num boas-vindas" aria-label="Como funciona"><h2 class="pn-t">Seu painel começa aqui</h2>
         <ol><li><b>Crie um orçamento.</b><span>Ele já vem preenchido com os seus padrões.</span></li><li><b>Envie pelo WhatsApp ou e-mail.</b><span>O link e a mensagem ficam prontos.</span></li><li><b>Acompanhe por aqui.</b><span>Valores, comissões, aprovações e prazos aparecem assim que a primeira proposta for enviada.</span></li></ol></section>` : `<section class="painel-num" aria-label="Resumo">
         <div class="nums">
           <div class="met"><span>Em negociação</span><b class="num">R$ ${brl(soma(abertos), false)}</b><small>${abertos.length} ${abertos.length === 1 ? 'proposta enviada' : 'propostas enviadas'}</small></div>
           <div class="met met--verde"><span>Aprovado</span><b class="num">R$ ${brl(soma(aprov), false)}</b><small>R$ ${brl(soma(aprov, 'liquido'), false)} líquido, sem comissões</small></div>
-          <div class="met met--coral"><span>Comissões</span><b class="num">R$ ${brl(comAprov, false)}</b><small>dos aprovados${comAbertos ? ` · + R$ ${brl(comAbertos, false)} em negociação` : ''}</small></div>
+          <div class="met met--neutro"><span>Comissões</span><b class="num">R$ ${brl(comAprov, false)}</b><small>dos aprovados${comAbertos ? ` · + R$ ${brl(comAbertos, false)} em negociação` : ''}</small></div>
           <div class="met"><span>Taxa de aprovação</span><b class="num">${taxa}</b><small>${aprov.length} de ${decididos} decididas</small></div>
         </div>
         ${totalFunil ? `<div class="funil" role="img" aria-label="Valor por status">${funil.filter(([, v]) => v).map(([s, v]) => `<i class="f--${s}" style="flex:${v}" title="${STATUS[s]}: R$ ${brl(v, false)}"></i>`).join('')}</div>
         <ul class="legenda">${funil.filter(([, v]) => v).map(([s, v]) => `<li><i class="f--${s}"></i>${STATUS[s]} <b class="num">R$ ${brl(v, false)}</b></li>`).join('')}</ul>` : ''}
-      </section>
-      <div class="painel-duplo">
+      </section>`}
+      <div class="filtros-linha"><div class="filtros">${['todos', ...Object.keys(STATUS)].filter(s => s === 'todos' || s === filtro || conta(s) > 0).map(s => `<button class="chip${filtro === s ? ' on' : ''}" data-filtro="${s}">${s === 'todos' ? 'Todos' : STATUS[s]}<span class="num">${conta(s)}</span></button>`).join('')}
+        ${tiposUsados.length > 1 ? `<span class="filtros-sep" aria-hidden="true"></span>${tiposUsados.map(t => `<button class="chip chip--tipo t--${t}${filtroTipo === t ? ' on' : ''}" data-filtro-tipo="${t}" aria-pressed="${filtroTipo === t}">${tagTipo(t)}<span class="num">${lista.filter(x => (x.tipo || 'website') === t).length}</span></button>`).join('')}` : ''}
+        </div><input class="busca" type="search" placeholder="Buscar cliente ou número" aria-label="Buscar cliente ou número" value="${esc(busca)}" id="busca"></div>
+      <div class="lista" id="lista"></div>
+      ${semDados ? '' : `<div class="painel-duplo">
         <section class="painel-num grafico" aria-label="Últimos 6 meses">${graficoMeses(lista)}</section>
         <section class="painel-num entregas" aria-label="Próximas entregas"><h2 class="pn-t">Próximas entregas</h2>
           ${entregas.length ? `<ul>${entregas.slice(0, 5).map(x => { const n = WD.diasAte(x.entrega); return `<li><a href="#/o/${x.id}"><b>${esc(x.cliente || 'Sem nome')}</b><span>Começou em ${fmtData(x.inicio)}</span></a><span class="ent${n < 0 ? ' atraso' : n <= 7 ? ' perto' : ''}"><b class="num">${fmtData(x.entrega)}</b><small>${faltam(x.entrega)}</small></span></li>`; }).join('')}</ul>` : '<p class="pn-vazio">Quando um cliente aprovar, o prazo de entrega aparece aqui.</p>'}
         </section>
       </div>`}
-      <div class="filtros">${['todos', ...Object.keys(STATUS)].map(s => `<button class="chip${filtro === s ? ' on' : ''}" data-filtro="${s}">${s === 'todos' ? 'Todos' : STATUS[s]}<span class="num">${conta(s)}</span></button>`).join('')}
-        ${tiposUsados.length > 1 ? `<span class="filtros-sep" aria-hidden="true"></span>${tiposUsados.map(t => `<button class="chip chip--tipo t--${t}${filtroTipo === t ? ' on' : ''}" data-filtro-tipo="${t}" aria-pressed="${filtroTipo === t}">${tagTipo(t)}<span class="num">${lista.filter(x => (x.tipo || 'website') === t).length}</span></button>`).join('')}` : ''}
-        <input class="busca" type="search" placeholder="Buscar cliente ou número" value="${esc(busca)}" id="busca"></div>
-      <div class="lista" id="lista"></div>
       <div class="rodape-lista"><a class="link-lixeira" href="#/lixeira">${ic('trash')}Lixeira<span class="num">${lixeira.length}</span></a>
         <p>Orçamentos do sistema anterior: <a href="antigo.html">abrir sistema antigo</a>.</p></div></div>`;
     desenharLista();
@@ -442,14 +478,14 @@
     const itens = lista.filter(x => (filtro === 'todos' || x.status === filtro) && (filtroTipo === 'todos' || (x.tipo || 'website') === filtroTipo) && (!q || `${x.cliente} ${x.contato} ${x.numero}`.toLowerCase().includes(q)));
     const el = $('#lista');
     if (!lista.length) { el.innerHTML = `<div class="vazio"><h2>Nenhum orçamento ainda</h2><p>Crie o primeiro. Ele já vem preenchido com os seus padrões.</p><p style="margin-top:16px"><button class="btn btn--p" onclick="document.getElementById('novo').click()">${ic('plus')}Novo orçamento</button></p></div>`; return; }
-    if (!itens.length) { el.innerHTML = `<div class="vazio">Nada encontrado com esse filtro.</div>`; return; }
+    if (!itens.length) { el.innerHTML = `<div class="vazio">Nada encontrado com esse filtro.<p style="margin-top:12px"><button class="btn btn--sm btn--g" id="limpar-filtros">Limpar filtros</button></p></div>`; $('#limpar-filtros').onclick = () => { filtro = 'todos'; filtroTipo = 'todos'; busca = ''; telaLista(); }; return; }
     el.innerHTML = `<div class="linha-o cab"><span>Cliente</span><span class="col-num">Nº</span><span class="col-status">Status</span><span class="col-valor">Valor</span><span class="col-data">Entrega</span><span class="col-acts">Ações</span></div>` +
       itens.map(x => `<div class="linha-o" data-id="${x.id}" tabindex="0" role="button" aria-label="Abrir ${esc(x.cliente || 'orçamento')}">
         <span class="cli"><i class="av t--${esc(x.tipo || 'website')}" aria-hidden="true">${esc(iniciais(x.cliente))}</i><span><b>${esc(x.cliente || 'Sem nome')}</b><span>${tagTipo(x.tipo)}${x.contato ? `<span class="cli-contato"> · ${esc(x.contato)}</span>` : ''}</span></span></span>
         <span class="col-num num">${esc(x.numero || '—')}</span>
-        <span class="col-status"><span class="status status--${x.status}">${STATUS[x.status] || x.status}</span>${x.pedidoEm && x.status !== 'aprovado' ? `<small class="pediu">${ic('flag')}Pediu aprovação</small>` : `<small class="num" title="${x.dataStatus ? esc(new Date(x.dataStatus).toLocaleString('pt-BR')) : ''}">${x.dataStatus ? 'em ' + new Date(x.dataStatus).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : ''}</small>`}</span>
+        <span class="col-status"><span class="status status--${x.status}">${STATUS[x.status] || x.status}</span>${x.pedidoEm && x.status !== 'aprovado' ? `<small class="pediu">${ic('flag')}Pediu aprovação</small>` : `<small class="num" title="${x.dataStatus ? esc(new Date(x.dataStatus).toLocaleString('pt-BR')) : ''}">${x.dataStatus ? ha(x.dataStatus) : ''}</small>`}</span>
         <span class="col-valor num">R$ ${brl(x.valor, false)}${x.comissao ? `<small title="Comissão${x.comissaoPara ? ' para ' + esc(x.comissaoPara) : ''}">com. R$ ${brl(x.comissao, false)}</small>` : ''}</span>
-        <span class="col-data">${x.entrega ? (() => { const n = WD.diasAte(x.entrega); return `<b class="num${n < 0 ? ' atraso' : n <= 7 ? ' perto' : ''}">${fmtData(x.entrega)}</b><small>${faltam(x.entrega)}</small>`; })() : `<small>${x.status === 'aprovado' ? '—' : 'após aprovar'}</small>`}</span>
+        <span class="col-data">${x.entrega ? (() => { const n = WD.diasAte(x.entrega); return `<b class="num${n < 0 ? ' atraso' : n <= 7 ? ' perto' : ''}">${fmtData(x.entrega)}</b><small>${faltam(x.entrega)}</small>`; })() : `<small>${x.status === 'aprovado' || x.status === 'recusado' ? '—' : 'após aprovar'}</small>`}</span>
         <span class="acts">
           <button class="icone-btn" title="Enviar no WhatsApp" aria-label="Enviar no WhatsApp" data-acao-l="whats" data-id-l="${x.id}">${ic('whatsapp')}</button>
           <button class="icone-btn" title="Enviar por e-mail" aria-label="Enviar por e-mail" data-acao-l="email" data-id-l="${x.id}">${ic('mail')}</button>
@@ -516,7 +552,12 @@
   function faixaPedido() {
     const el = $('#faixa-pedido'); if (!el || !atual) return;
     const ped = atual.escolha && atual.escolha.pedidoEm;
-    if (!ped || atual.status === 'aprovado') { el.innerHTML = ''; return; }
+    if (atual.status === 'aprovado') {
+      const ap = (atual.escolha && atual.escolha.aprovadoEm) || WD.dataStatus(atual);
+      el.innerHTML = `<div class="faixa-pedido faixa-pedido--info"><span class="fp-ic">${ic('check')}</span><div><b>Aprovada${ap ? ' em ' + new Date(ap).toLocaleDateString('pt-BR') : ''}</b><span>O cliente aprovou estes valores e condições. Se mudar algo, avise o cliente antes.</span></div></div>`;
+      return;
+    }
+    if (!ped) { el.innerHTML = ''; return; }
     const c = WD.calcular(atual, atual.escolha);
     el.innerHTML = `<div class="faixa-pedido"><span class="fp-ic">${ic('flag')}</span><div><b>${esc(atual.cliente.contato || atual.cliente.empresa || 'O cliente')} pediu a aprovação em ${new Date(ped).toLocaleDateString('pt-BR')}</b>
       <span>R$ ${brl(c.final, false)}, ${esc(WD.textoForma(c))}${c.mensal ? ` + R$ ${brl(c.mensal, false)}/mês` : ''}. Confirme depois de combinar pelo WhatsApp.</span></div>
@@ -610,7 +651,16 @@
     desenhar();
     ligarForm($('#campos'), () => atual, secoes, mudou, desenhar);
     $('#campos').addEventListener('toggle', e => { const d = e.target; if (d.dataset && d.dataset.sec) { d.open ? abertasEd.add(d.dataset.sec) : abertasEd.delete(d.dataset.sec); if (d.open) irPara(d.dataset.sec); } }, true);
-    $('#ed-status').onchange = e => { atual.status = e.target.value; e.target.dataset.s = atual.status; WD.registrar(atual, atual.status, 'voce'); mudou(); faixaPedido(); };
+    $('#ed-status').onchange = e => {
+      const antes = atual.status, depois = e.target.value, nH = (atual.historico || []).length, escAntes = atual.escolha ? Object.assign({}, atual.escolha) : atual.escolha;
+      atual.status = depois; e.target.dataset.s = depois; WD.registrar(atual, depois, 'voce');
+      if (depois === 'aprovado') atual.escolha = Object.assign({}, atual.escolha, { aprovadoEm: new Date().toISOString() });
+      mudou(); faixaPedido();
+      toast(`Status: ${STATUS[depois]}`, 'Desfazer', () => {
+        if (!atual) return; atual.status = antes; atual.escolha = escAntes; if (Array.isArray(atual.historico)) atual.historico.length = Math.min(atual.historico.length, nH);
+        const s = $('#ed-status'); if (s) { s.value = antes; s.dataset.s = antes; } mudou(); faixaPedido(); toast(`Status voltou para ${STATUS[antes]}`);
+      }, 7000);
+    };
     faixaPedido();
     $('#enviar').onclick = abrirEnvio;
     $('#pdf').onclick = menuPDF;
@@ -719,7 +769,7 @@
     const m = WD.cfgDoTipo(cfg, atual.tipo).mensagens || WD.CONFIG_PADRAO.mensagens;
     const local = WD.store.modo === 'local';
     dlg.innerHTML = `<div class="dlg"><h2>Enviar proposta</h2>
-      ${local ? `<p class="aviso-local" style="margin:0"><span class="ponto"></span><span><b>Modo local:</b> o link só abre neste navegador. Envie o PDF até conectar o Supabase.</span></p>` : `<p>O cliente abre a proposta pelo link, escolhe a forma de pagamento e aprova. Você acompanha o status aqui.</p>`}
+      ${local ? `<p class="aviso-local" style="margin:0"><span class="ponto"></span><span><b>Modo local:</b> o link só abre neste navegador. Envie o PDF até conectar o banco de dados online.</span></p>` : `<p>O cliente abre a proposta pelo link, escolhe a forma de pagamento e aprova. Você acompanha o status aqui.</p>`}
       <div class="link"><input readonly value="${esc(linkCliente())}" id="env-link"><button class="btn btn--g" id="env-copiar">${ic('link')}Copiar</button></div>
       <div class="tabs seg"><button class="on" data-canal="whats">${ic('whats')}WhatsApp</button><button data-canal="email">${ic('mail')}E-mail</button></div>
       <div id="env-whats"><textarea id="env-msg">${esc(preencher(m.whatsapp))}</textarea><p class="dica" style="font-size:12.5px;color:var(--texto-3);margin-top:6px">${atual.cliente.whatsapp ? 'Vai para ' + esc(atual.cliente.whatsapp) : 'Sem WhatsApp do cliente: você escolhe o contato ao abrir.'}</p></div>
