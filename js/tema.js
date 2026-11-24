@@ -46,8 +46,8 @@ WD.botaoTema = function () {
   function montar() {
     if (document.querySelector('.tema-sw')) return;
     var st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
-    var el = document.createElement('div');
-    el.className = 'tema-sw'; el.setAttribute('role', 'group'); el.setAttribute('aria-label', 'Modo de cor');
+    var el = document.createElement('aside');
+    el.className = 'tema-sw'; el.setAttribute('aria-label', 'Modo de cor');
     el.innerHTML = '<button type="button" data-tema-set="escuro" title="Modo escuro">' + lua + '<span>Escuro</span></button>' +
       '<button type="button" data-tema-set="claro" title="Modo claro">' + sol + '<span>Claro</span></button>';
     document.body.appendChild(el);

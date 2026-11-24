@@ -66,7 +66,7 @@
       case 'check': return `<div class="campo${larg}"><label class="check"><input type="checkbox" ${at}${v ? ' checked' : ''}>${f.label}</label>${dica}</div>`;
       case 'select': { const ops = typeof f.opcoes === 'function' ? f.opcoes() : f.opcoes; return `<div class="campo${larg}"><label for="${id}">${f.label}</label><select ${at}>${Object.entries(ops).map(([k, n]) => `<option value="${esc(k)}"${String(v) === k ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select>${dica}</div>`; }
       case 'icone': return `<div class="campo${larg}"><label for="${id}">${f.label}</label><select ${at}>${ICONES.map(([k, n]) => `<option value="${k}"${v === k ? ' selected' : ''}>${n}</option>`).join('')}</select></div>`;
-      case 'imagem': return `<div class="campo${larg}"><label for="${id}">${f.label}</label>${v ? `<img class="miniatura" src="${esc(v)}" alt="">` : ''}<div style="display:flex;gap:8px"><input type="text" ${at} value="${esc(v && v.startsWith('data:') ? '(imagem enviada)' : v)}" placeholder="img/arquivo.webp ou https://…" style="flex:1"><label class="btn btn--sm btn--g">${ic('image')}Enviar<input type="file" accept="image/*" hidden data-upload="${p}"></label></div><span class="dica">${f.dica || 'Imagem horizontal, de preferência 1600 × 1000 px.'}</span></div>`;
+      case 'imagem': return `<div class="campo${larg}"><label for="${id}">${f.label}</label>${v ? `<img class="miniatura" src="${esc(v)}" alt="" loading="lazy" decoding="async">` : ''}<div style="display:flex;gap:8px"><input type="text" ${at} value="${esc(v && v.startsWith('data:') ? '(imagem enviada)' : v)}" placeholder="img/arquivo.webp ou https://…" style="flex:1"><label class="btn btn--sm btn--g">${ic('image')}Enviar<input type="file" accept="image/*" hidden data-upload="${p}"></label></div><span class="dica">${f.dica || 'Imagem horizontal, de preferência 1600 × 1000 px.'}</span></div>`;
       case 'fixo': return `<div class="campo${larg}"><span class="rot">${f.label}</span><div class="fixo num" title="A numeração é automática e não pode ser alterada">${esc(v || '—')}</div>${dica}</div>`;
       case 'pagamentos': {
         const pg = v || {}; const ordem = WD.ordemPagamento(pg);
@@ -480,8 +480,8 @@
     if (!lista.length) { el.innerHTML = `<div class="vazio"><h2>Nenhum orçamento ainda</h2><p>Crie o primeiro. Ele já vem preenchido com os seus padrões.</p><p style="margin-top:16px"><button class="btn btn--p" onclick="document.getElementById('novo').click()">${ic('plus')}Novo orçamento</button></p></div>`; return; }
     if (!itens.length) { el.innerHTML = `<div class="vazio">Nada encontrado com esse filtro.<p style="margin-top:12px"><button class="btn btn--sm btn--g" id="limpar-filtros">Limpar filtros</button></p></div>`; $('#limpar-filtros').onclick = () => { filtro = 'todos'; filtroTipo = 'todos'; busca = ''; telaLista(); }; return; }
     el.innerHTML = `<div class="linha-o cab"><span>Cliente</span><span class="col-num">Nº</span><span class="col-status">Status</span><span class="col-valor">Valor</span><span class="col-data">Entrega</span><span class="col-acts">Ações</span></div>` +
-      itens.map(x => `<div class="linha-o" data-id="${x.id}" tabindex="0" role="button" aria-label="Abrir ${esc(x.cliente || 'orçamento')}">
-        <span class="cli"><i class="av t--${esc(x.tipo || 'website')}" aria-hidden="true">${esc(iniciais(x.cliente))}</i><span><b>${esc(x.cliente || 'Sem nome')}</b><span>${tagTipo(x.tipo)}${x.contato ? `<span class="cli-contato"> · ${esc(x.contato)}</span>` : ''}</span></span></span>
+      itens.map(x => `<div class="linha-o" data-id="${x.id}">
+        <span class="cli"><i class="av t--${esc(x.tipo || 'website')}" aria-hidden="true">${esc(iniciais(x.cliente))}</i><span><b><a class="linha-link" href="#/o/${x.id}">${esc(x.cliente || 'Sem nome')}</a></b><span>${tagTipo(x.tipo)}${x.contato ? `<span class="cli-contato"> · ${esc(x.contato)}</span>` : ''}</span></span></span>
         <span class="col-num num">${esc(x.numero || '—')}</span>
         <span class="col-status"><span class="status status--${x.status}">${STATUS[x.status] || x.status}</span>${x.pedidoEm && x.status !== 'aprovado' ? `<small class="pediu">${ic('flag')}Pediu aprovação</small>` : `<small class="num" title="${x.dataStatus ? esc(new Date(x.dataStatus).toLocaleString('pt-BR')) : ''}">${x.dataStatus ? ha(x.dataStatus) : ''}</small>`}</span>
         <span class="col-valor num">R$ ${brl(x.valor, false)}${x.comissao ? `<small title="Comissão${x.comissaoPara ? ' para ' + esc(x.comissaoPara) : ''}">com. R$ ${brl(x.comissao, false)}</small>` : ''}</span>
@@ -494,8 +494,7 @@
           <button class="icone-btn" title="Mais ações" aria-label="Mais ações" aria-haspopup="menu" data-mais="${x.id}">${ic('more')}</button></span></div>`).join('');
     $$('[data-acao-l]', el).forEach(b => b.onclick = () => acaoLista(b.dataset.idL, b.dataset.acaoL, b));
     $$('.linha-o[data-id]', el).forEach(r => {
-      r.onclick = e => { if (e.target.closest('button')) return; location.hash = '#/o/' + r.dataset.id; };
-      r.onkeydown = e => { if (e.key === 'Enter') location.hash = '#/o/' + r.dataset.id; };
+      r.onclick = e => { if (e.target.closest('button,a')) return; location.hash = '#/o/' + r.dataset.id; };
     });
     $$('[data-mais]', el).forEach(b => b.onclick = () => menuMais(b, b.dataset.mais));
   }
@@ -627,7 +626,7 @@
       <section class="form" aria-label="Formulário">
         <div class="form-topo">
           <a class="icone-btn" href="#/" title="Voltar">${ic('back')}</a>
-          <div class="tit">${tagTipo(atual.tipo)}<b id="ed-tit"></b><span><span class="salvo" id="salvo">Salvo</span><span class="ed-valor num" id="ed-valor"></span></span></div>
+          <div class="tit">${tagTipo(atual.tipo)}<h1 id="ed-tit" class="ed-tit"></h1><span><span class="salvo" id="salvo">Salvo</span><span class="ed-valor num" id="ed-valor"></span></span></div>
           <select id="ed-status" class="sel-status" data-s="${atual.status}" aria-label="Status">${Object.entries(STATUS).map(([k, n]) => `<option value="${k}"${atual.status === k ? ' selected' : ''}>${n}</option>`).join('')}</select>
           <button class="btn btn--sm btn--g alternar-prev" id="ver-prev">${ic('eye')}Ver</button>
           <button class="btn btn--sm btn--p" id="enviar">${ic('send')}Enviar</button>
@@ -847,7 +846,7 @@
     tela.innerHTML = `<div class="pagina"><div class="cab-pag"><div><h1>Configurações</h1><p>Padrões que entram em todo orçamento novo. Cada orçamento continua editável.</p>
       <div class="seg seg-modelo" role="tablist" aria-label="Modelo">${Object.entries(WD.TIPOS).filter(([, t]) => t.ativo).map(([k, t]) => `<button role="tab" aria-selected="${modeloCfg === k}" class="${modeloCfg === k ? 'on' : ''}" data-modelo="${k}">${tagTipo(k)}${k === 'website' ? '<small> e dados gerais</small>' : ''}</button>`).join('')}</div></div>
       <div class="acoes"><button class="btn btn--g btn--perigo" id="restaurar">Restaurar padrões</button><span class="salvo" id="cfg-salvo" style="align-self:center">Salvo</span></div></div>
-      <div class="cfg"><nav class="cfg-nav">${secoes.map(s => `<a href="#sec-${s.id}" data-ir="${s.id}">${s.titulo}</a>`).join('')}</nav><div id="cfg-campos"></div></div></div>`;
+      <div class="cfg"><nav class="cfg-nav" aria-label="Seções das configurações">${secoes.map(s => `<a href="#sec-${s.id}" data-ir="${s.id}">${s.titulo}</a>`).join('')}</nav><div id="cfg-campos"></div></div></div>`;
     const desenhar = () => { $$('#cfg-campos details').forEach(d => d.open ? abertasCfg.add(d.dataset.sec) : abertasCfg.delete(d.dataset.sec)); $('#cfg-campos').innerHTML = secoesHTML(secoes, rascunho, abertasCfg); };
     desenhar();
     $$('[data-modelo]').forEach(b => b.onclick = () => { if (modeloCfg === b.dataset.modelo) return; clearTimeout(timer); salvar().then(() => { modeloCfg = b.dataset.modelo; telaConfig(); }); });

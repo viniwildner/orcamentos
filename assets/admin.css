@@ -89,7 +89,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .form{overflow-y:auto;border-right:1px solid var(--borda-sutil);background:var(--superficie)}
 .form-topo{position:sticky;top:0;z-index:5;background:var(--superficie);border-bottom:1px solid var(--borda-sutil);padding:12px 16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .form-topo .tit{flex:1;min-width:120px}
-.form-topo .tit b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.form-topo .tit b,.form-topo .ed-tit{display:block;margin:0;font:inherit;font-weight:600;letter-spacing:normal;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .form-topo .tit span{color:var(--texto-3);font-size:12.5px}
 .form-topo select{height:32px;border-radius:var(--raio);border:1px solid var(--borda);background:var(--superficie-2);padding:0 8px;font-size:13px}
 .salvo{font-size:12px;color:var(--texto-3);white-space:nowrap}
@@ -113,7 +113,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .prefixo>span{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--texto-3);font-size:13px;pointer-events:none}
 .prefixo>input{padding-left:32px!important}
 .check{display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;color:var(--texto)}
-.check input{width:16px;height:16px;accent-color:var(--verde)}
+.check input{width:18px;height:18px;flex:none;accent-color:var(--verde)}
 .itens{grid-column:span 6;display:flex;flex-direction:column;gap:8px}
 .item{border:1px solid var(--borda-sutil);border-radius:var(--raio);background:var(--fundo)}
 .item>header{display:flex;align-items:center;gap:6px;padding:6px 6px 6px 12px;border-bottom:1px solid var(--borda-sutil);font-size:13px;color:var(--texto-2)}
@@ -132,7 +132,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 /* Pré-visualização */
 .preview{display:flex;flex-direction:column;min-width:0;background:var(--preview-bg)}
 .preview-topo{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--borda-sutil)}
-.preview-topo .rot{font-size:12.5px;color:var(--texto-3);margin-right:auto}
+.preview-topo .rot{font-size:12.5px;color:var(--texto-2);margin-right:auto}
 .seg{display:inline-flex;background:var(--superficie-2);border-radius:var(--raio);padding:3px}
 .seg button{height:28px;padding:0 10px;border:0;border-radius:4px;background:transparent;color:var(--texto-2);cursor:pointer;font-size:13px;display:flex;align-items:center;gap:6px}
 .seg button.on{background:var(--fundo);color:var(--texto)}
@@ -252,7 +252,7 @@ dialog::backdrop{background:rgba(0,0,0,.6)}
 @media (hover:none){.linha-o .acts{opacity:1}}
 
 /* ---------- Revisão de design: editor ---------- */
-.form-topo .tit b{font-size:15.5px}
+.form-topo .tit b,.form-topo .ed-tit{font-size:15.5px}
 .form-topo .tit>span{display:flex;gap:10px;align-items:baseline;font-size:12.5px}
 .ed-valor{color:var(--texto-2)}
 .sel-status{appearance:none;-webkit-appearance:none;height:32px;border-radius:999px!important;border:0!important;padding:0 30px 0 14px!important;font-weight:600;font-size:13px;cursor:pointer;background:var(--superficie-2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none' stroke='%2382838c' stroke-width='1.5'%3E%3Cpath d='m1 1 4 4 4-4'/%3E%3C/svg%3E") no-repeat right 12px center!important;color:var(--texto-2)}
@@ -432,7 +432,7 @@ html{accent-color:var(--verde);caret-color:var(--verde)}
 
 /* ---------- Tipos de projeto ---------- */
 :root{--t-website:#5cc8f5;--t-website-bg:rgba(92,200,245,.14);--t-identidade:#ffc14d;--t-identidade-bg:rgba(255,193,77,.14);--t-chatbot:#f58ad0;--t-chatbot-bg:rgba(245,138,208,.14);--t-grafico:#b9a4ff;--t-grafico-bg:rgba(185,164,255,.14)}
-:root[data-tema="claro"]{--t-website:#0a74a3;--t-website-bg:rgba(10,116,163,.1);--t-identidade:#9a6200;--t-identidade-bg:rgba(214,145,0,.14);--t-chatbot:#b0277f;--t-chatbot-bg:rgba(176,39,127,.1);--t-grafico:#5b3fc4;--t-grafico-bg:rgba(91,63,196,.1)}
+:root[data-tema="claro"]{--t-website:#0a74a3;--t-website-bg:rgba(10,116,163,.1);--t-identidade:#865500;--t-identidade-bg:rgba(214,145,0,.14);--t-chatbot:#b0277f;--t-chatbot-bg:rgba(176,39,127,.1);--t-grafico:#5b3fc4;--t-grafico-bg:rgba(91,63,196,.1)}
 .t--website{--t:var(--t-website);--t-bg:var(--t-website-bg)}
 .t--identidade{--t:var(--t-identidade);--t-bg:var(--t-identidade-bg)}
 .t--chatbot{--t:var(--t-chatbot);--t-bg:var(--t-chatbot-bg)}
@@ -468,7 +468,7 @@ html{accent-color:var(--verde);caret-color:var(--verde)}
 .link-lixeira:hover{background:var(--superficie-2);color:var(--texto)}
 .link-lixeira .i{width:16px;height:16px}
 .link-lixeira .num{font-size:12px;color:var(--texto-3)}
-.voltar-lista{display:inline-flex;align-items:center;gap:6px;color:inherit;text-decoration:none}
+.voltar-lista{display:inline-flex;align-items:center;gap:6px;min-height:32px;color:inherit;text-decoration:none}
 .voltar-lista:hover{color:var(--texto)}
 .voltar-lista .i{width:14px;height:14px}
 .cab-lead{margin:6px 0 0;color:var(--texto-2);font-size:14px;max-width:60ch}
@@ -493,7 +493,7 @@ html{accent-color:var(--verde);caret-color:var(--verde)}
 .filtros-linha .filtros{flex:1;min-width:0;margin-bottom:0}
 .filtros-linha .busca{margin-left:auto;flex:none}
 input::placeholder,textarea::placeholder{color:var(--texto-3);opacity:1}
-.pendencias{background:var(--superficie);border:1px solid var(--borda-sutil);border-left:3px solid var(--ok);border-radius:var(--raio);padding:18px 20px;margin-bottom:24px}
+.pendencias{background:var(--superficie);border:1px solid var(--borda-sutil);border-radius:var(--raio);padding:18px 20px;margin-bottom:24px}
 .pendencias .pn-t{display:flex;align-items:center;gap:8px;margin:0 0 10px}
 .pendencias .pn-t .num{font:600 12px/1 var(--sans);padding:4px 8px;border-radius:999px;background:var(--ok-bg);color:var(--ok)}
 .pendencias ul{list-style:none;margin:0;padding:0;display:grid}
@@ -527,3 +527,15 @@ input::placeholder,textarea::placeholder{color:var(--texto-3);opacity:1}
   .filtros-linha .filtros{flex:0 1 auto}
   .filtros-linha .busca{width:240px}
 }
+
+/* Auditoria 24/11: nome do cliente é o link da linha */
+.linha-link{color:inherit;text-decoration:none}
+.linha-link:hover{text-decoration:underline;text-underline-offset:3px}
+.linha-link:focus-visible{outline:2px solid var(--foco,var(--verde));outline-offset:2px;border-radius:4px}
+.linha-o:has(.linha-link:focus-visible){background:var(--superficie-2)}
+/* Celular: a faixa de filtros rola por dentro, sem empurrar a página para o lado */
+@media (max-width:640px){
+  .filtros-linha{align-items:stretch}
+  .filtros-linha .filtros{max-width:calc(100% + 32px)}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
