@@ -2,22 +2,22 @@
    Coluna de leitura de 1040px; índice fixo à esquerda no desktop. Tema escuro da marca, único por escolha. */
 :root{
   --fundo:#111013; --superficie:#242326; --superficie-elevada:#4d4c4e; --grafite:#141414;
-  --texto:#ffffff; --texto-secundario:rgba(255,255,255,.75); --texto-suave:#82838c;
+  --texto:#ffffff; --texto-secundario:rgba(255,255,255,.75); --texto-suave:#9495a0;
   --verde:#0ffaa4; --verde-hover:#04dc8d; --sobre-verde:#111013;
   --coral:#ff6a3d; --sobre-coral:#111013;
   --borda:rgba(255,255,255,.2); --borda-sutil:rgba(255,255,255,.075);
   --display:"Playfair Display",Georgia,"Times New Roman",serif;
   --sans:"DM Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --raio:5.6px; --raio-sm:3px;
-  --destaque:var(--verde); --topo-bg:rgba(17,16,19,.92); --borda-forte:rgba(255,255,255,.4);
+  --destaque:var(--verde); --foco:var(--verde); --topo-bg:rgba(17,16,19,.92); --borda-forte:rgba(255,255,255,.4);
   color-scheme:dark;
 }
-/* Modo claro: fundo branco; destaque em texto vira cinza (regra da marca), o verde fica nos botões e formas */
+/* Modo claro: fundo branco; destaque em texto num verde escuro legível (#077a52, 5,4:1 no branco); o verde vivo fica nos botões e formas */
 :root[data-tema="claro"]{
   --fundo:#ffffff; --superficie:#f3f3f4; --superficie-elevada:#e2e2e5; --grafite:#f3f3f4;
   --texto:#111013; --texto-secundario:rgba(17,16,19,.74); --texto-suave:#6b6c73;
   --borda:rgba(17,16,19,.16); --borda-sutil:rgba(17,16,19,.08); --borda-forte:rgba(17,16,19,.35);
-  --destaque:#4d4c4e; --topo-bg:rgba(255,255,255,.92);
+  --destaque:#077a52; --foco:#077a52; --topo-bg:rgba(255,255,255,.92);
   color-scheme:light;
 }
 *{box-sizing:border-box}
@@ -36,7 +36,7 @@ svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.5;stro
 .topo__meta{margin-left:auto;font:500 13px/1.3 var(--sans);color:var(--texto-suave);text-align:right}
 .topo__meta b{color:var(--texto);font-weight:600;display:block}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;padding:0 18px;border:0;border-radius:var(--raio);font:600 14.76px/1.2 var(--sans);cursor:pointer;text-decoration:none;white-space:nowrap;transition:background-color .15s}
-.btn:focus-visible,.opcao:focus-within,summary:focus-visible,.indice a:focus-visible{outline:2px solid var(--verde);outline-offset:2px}
+.btn:focus-visible,.opcao:focus-within,summary:focus-visible,.indice a:focus-visible,.conf-ap .btn:focus-visible,.btn-icone:focus-visible{outline:2px solid var(--foco);outline-offset:2px}
 .btn--p{background:var(--verde);color:var(--sobre-verde)}
 .btn--p:hover{background:var(--verde-hover)}
 .btn--s{background:var(--superficie-elevada);color:var(--texto)}
@@ -537,3 +537,9 @@ html{accent-color:var(--verde);caret-color:var(--verde)}
   .conf-ap__acoes{flex-direction:column-reverse}
   .conf-ap__acoes .btn{width:100%;height:48px}
 }
+
+/* Opcionais: os demais ficam em "Ver mais" na tela; no PDF aparecem todos */
+@media screen{.extras:not(.aberto) .extra--mais{display:none}}
+.ver-mais{margin-top:4px;width:100%}
+.ver-mais .i{width:18px;height:18px}
+.travado .ver-mais{display:none}

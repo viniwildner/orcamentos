@@ -11,7 +11,7 @@ Regras visuais do sistema de orçamentos. Valem para o painel (`assets/admin.css
 
 ## Cores
 
-Tem dois modos, escolhidos pelo seletor Escuro/Claro flutuante na lateral esquerda e lembrados no navegador. O **claro** é o padrão. No **claro**, o fundo é branco e o destaque em texto vira cinza `#4D4C4E`; o verde continua só nos botões e formas.
+Tem dois modos, escolhidos pelo seletor Escuro/Claro flutuante na lateral esquerda e lembrados no navegador. O **claro** é o padrão. No **claro**, o fundo é branco e o destaque em texto vira um verde escuro legível `#077A52` na proposta do cliente (decisão do Marcus em 24/11/2026); o verde vivo continua nos botões e formas.
 
 ### Modo escuro
 

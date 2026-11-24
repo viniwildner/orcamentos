@@ -278,6 +278,10 @@ window.WD = window.WD || {};
 
     const p = o.pagamento || {};
     const opcao = (forma, titulo, desc, valor, selo) => `<label class="opcao${c.forma === forma ? ' on' : ''}" data-pag="${forma}"><input type="radio" name="pag" value="${forma}"${c.forma === forma ? ' checked' : ''}><span class="marca"></span><span><b>${titulo}${selo ? ` <span class="selo" style="margin-left:6px">${selo}</span>` : ''}</b><span class="d">${desc}</span></span><span class="v num" data-v="${forma}">${valor}</span></label>`;
+    /* Muitos opcionais: mostra os 3 primeiros (a ordem das Configurações define os recomendados) e os já marcados; o resto fica em "Ver mais" */
+    const nOps = (o.opcionais || []).length;
+    let maisExtras = nOps > 4 ? (o.opcionais || []).map((_, i) => i).filter(i => i >= 3 && !c.marcados[i]) : [];
+    if (maisExtras.length < 2) maisExtras = [];
     add('investimento', 'Investimento', `
     <section class="folha" id="investimento">
       <div class="cab"><p class="rotulo">Investimento</p><h2 class="titulo">Escolha como prefere <em>pagar</em></h2><p class="lead">Marque a forma de pagamento e os serviços opcionais. O valor se atualiza na hora.</p></div>
@@ -290,7 +294,8 @@ window.WD = window.WD || {};
         </div>
         ${(o.opcionais || []).length ? `<div class="extras">
           <h3>Serviços opcionais</h3><p class="ajuda so-tela"><b>Você escolhe:</b> toque para marcar os serviços que quer incluir ou desmarcar os que não quer. O total se atualiza na hora.</p><p class="ajuda so-print">Serviços que podem ser incluídos no projeto. Os marcados já estão somados no total.</p>
-          ${o.opcionais.map((op, i) => `<label class="opcao extra${c.marcados[i] ? ' on' : ''}" data-extra="${i}"><input type="checkbox"${c.marcados[i] ? ' checked' : ''}><span class="marca"></span><span><b>${esc(op.nome)}${op.selo ? ` <span class="selo selo--alta">${esc(op.selo)}</span>` : ''}</b><span class="d">${esc(op.desc)}</span><span class="estado so-tela"><span class="e-add">+ Adicionar</span><span class="e-ok">Incluído · toque para remover</span></span></span><span class="v num">R$ ${brl(op.valor, false)}${op.tipo === 'mensal' ? '<small>por mês</small>' : ''}</span></label>`).join('')}
+          ${o.opcionais.map((op, i) => `<label class="opcao extra${c.marcados[i] ? ' on' : ''}${maisExtras.includes(i) ? ' extra--mais' : ''}" data-extra="${i}"><input type="checkbox"${c.marcados[i] ? ' checked' : ''}><span class="marca"></span><span><b>${esc(op.nome)}${op.selo ? ` <span class="selo selo--alta">${esc(op.selo)}</span>` : ''}</b><span class="d">${esc(op.desc)}</span><span class="estado so-tela"><span class="e-add">+ Adicionar</span><span class="e-ok">Incluído · toque para remover</span></span></span><span class="v num">R$ ${brl(op.valor, false)}${op.tipo === 'mensal' ? '<small>por mês</small>' : ''}</span></label>`).join('')}
+          ${maisExtras.length ? `<button type="button" class="btn btn--s ver-mais so-tela" data-ver-mais aria-expanded="false">${ic('plus')}Ver mais ${maisExtras.length} serviço${maisExtras.length > 1 ? 's' : ''}</button>` : ''}
           ${o.opcionais.some(op => op.tipo === 'mensal') ? `<div class="mensal"><span>${T.mensal}</span><b data-mensal></b></div>` : ''}
         </div>` : ''}
       </div>
@@ -477,6 +482,8 @@ window.WD = window.WD || {};
       d.showModal();
     }
     $$('[data-aprovar]').forEach(b => b.addEventListener('click', () => confirmarAprovacao(b)));
+    const vm = $('[data-ver-mais]');
+    if (vm) vm.addEventListener('click', () => { const ex = vm.closest('.extras'); ex.classList.add('aberto'); vm.setAttribute('aria-expanded', 'true'); const prim = ex.querySelector('.extra--mais input'); vm.hidden = true; if (prim) prim.focus(); });
 
     root.addEventListener('change', e => {
       const lab = e.target.closest('.opcao'); if (!lab || travado) return;
