@@ -161,9 +161,9 @@ WD.CONFIG_PADRAO = {
   portfolioVersao: 2,
   modelos: {
     identidade: {
-      versao: 2,
+      versao: 3,
       imagemCapa: 'img/capa-identidade.webp',
-      valorBase: 4800,
+      valorBase: 2000,
       descricaoBase: 'Identidade visual completa',
       rodadas: 2,
       diferenciais: [
@@ -323,7 +323,7 @@ WD.novoOrcamentoIdentidade = function (cfg) {
       { nome: 'Manual e aplicações', desc: 'Regras de uso e peças da marca', barra: 'Manual', inicio: 5, duracao: 1, tipo: 'normal' },
       { nome: 'Entrega', desc: 'Arquivos finais organizados', barra: 'Entrega', inicio: 6, duracao: 1, tipo: 'final' }
     ],
-    valorBase: m.valorBase || 4800,
+    valorBase: m.valorBase || 2000,
     descricaoBase: m.descricaoBase || 'Identidade visual completa',
     pagamento: JSON.parse(JSON.stringify(cfg.pagamento)),
     pagamentoPadrao: 'parcelado',
