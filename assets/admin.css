@@ -476,3 +476,13 @@ html{accent-color:var(--verde);caret-color:var(--verde)}
 .linha-lix .btn .i{width:16px;height:16px}
 .btn--apagar{background:var(--coral);color:#1b0d07}
 .btn--apagar:hover{background:var(--coral);filter:brightness(1.08)}
+
+/* ---------- Pedido de aprovação ---------- */
+.col-status .pediu{display:inline-flex;align-items:center;gap:5px;color:var(--ok);font-weight:600}
+.col-status .pediu .i{width:13px;height:13px}
+.faixa-pedido{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;margin:12px 16px 0;padding:12px 14px;border-radius:var(--raio);background:var(--ok-bg);border:1px solid var(--ok)}
+.faixa-pedido .fp-ic{color:var(--ok);display:grid}
+.faixa-pedido .fp-ic .i{width:20px;height:20px}
+.faixa-pedido b{display:block;font-size:14px}
+.faixa-pedido span{font-size:13px;color:var(--texto-2)}
+@media (max-width:560px){.faixa-pedido{grid-template-columns:auto minmax(0,1fr)}.faixa-pedido .btn{grid-column:1/-1}}

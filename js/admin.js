@@ -447,7 +447,7 @@
       itens.map(x => `<div class="linha-o" data-id="${x.id}" tabindex="0" role="button" aria-label="Abrir ${esc(x.cliente || 'orçamento')}">
         <span class="cli"><i class="av t--${esc(x.tipo || 'website')}" aria-hidden="true">${esc(iniciais(x.cliente))}</i><span><b>${esc(x.cliente || 'Sem nome')}</b><span>${tagTipo(x.tipo)}${x.contato ? `<span class="cli-contato"> · ${esc(x.contato)}</span>` : ''}</span></span></span>
         <span class="col-num num">${esc(x.numero || '—')}</span>
-        <span class="col-status"><span class="status status--${x.status}">${STATUS[x.status] || x.status}</span><small class="num" title="${x.dataStatus ? esc(new Date(x.dataStatus).toLocaleString('pt-BR')) : ''}">${x.dataStatus ? 'em ' + new Date(x.dataStatus).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : ''}</small></span>
+        <span class="col-status"><span class="status status--${x.status}">${STATUS[x.status] || x.status}</span>${x.pedidoEm && x.status !== 'aprovado' ? `<small class="pediu">${ic('flag')}Pediu aprovação</small>` : `<small class="num" title="${x.dataStatus ? esc(new Date(x.dataStatus).toLocaleString('pt-BR')) : ''}">${x.dataStatus ? 'em ' + new Date(x.dataStatus).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : ''}</small>`}</span>
         <span class="col-valor num">R$ ${brl(x.valor, false)}${x.comissao ? `<small title="Comissão${x.comissaoPara ? ' para ' + esc(x.comissaoPara) : ''}">com. R$ ${brl(x.comissao, false)}</small>` : ''}</span>
         <span class="col-data">${x.entrega ? (() => { const n = WD.diasAte(x.entrega); return `<b class="num${n < 0 ? ' atraso' : n <= 7 ? ' perto' : ''}">${fmtData(x.entrega)}</b><small>${faltam(x.entrega)}</small>`; })() : `<small>${x.status === 'aprovado' ? '—' : 'após aprovar'}</small>`}</span>
         <span class="acts">
@@ -512,6 +512,23 @@
     toast(`Orçamento ${x.numero || ''} foi para a lixeira`, 'Desfazer', async () => { try { await WD.store.restaurar(id); await telaLista(); toast('Orçamento restaurado'); } catch (e) { erro(e); } }, 8000);
   }
 
+  /* Cliente pediu aprovação pela proposta: você confere e confirma aqui */
+  function faixaPedido() {
+    const el = $('#faixa-pedido'); if (!el || !atual) return;
+    const ped = atual.escolha && atual.escolha.pedidoEm;
+    if (!ped || atual.status === 'aprovado') { el.innerHTML = ''; return; }
+    const c = WD.calcular(atual, atual.escolha);
+    el.innerHTML = `<div class="faixa-pedido"><span class="fp-ic">${ic('flag')}</span><div><b>${esc(atual.cliente.contato || atual.cliente.empresa || 'O cliente')} pediu a aprovação em ${new Date(ped).toLocaleDateString('pt-BR')}</b>
+      <span>R$ ${brl(c.final, false)}, ${esc(WD.textoForma(c))}${c.mensal ? ` + R$ ${brl(c.mensal, false)}/mês` : ''}. Confirme depois de combinar pelo WhatsApp.</span></div>
+      <button class="btn btn--sm btn--p" id="confirmar-ap">${ic('check')}Confirmar aprovação</button></div>`;
+    $('#confirmar-ap').onclick = () => {
+      atual.status = 'aprovado'; atual.escolha = Object.assign({}, atual.escolha, { aprovadoEm: new Date().toISOString() });
+      WD.registrar(atual, 'aprovado', 'voce');
+      const s = $('#ed-status'); s.value = 'aprovado'; s.dataset.s = 'aprovado';
+      mudou(); faixaPedido(); toast('Proposta aprovada. O prazo começa a contar hoje.');
+    };
+  }
+
   /* ---------- Lixeira ---------- */
   async function telaLixeira() {
     marcarNav('lista');
@@ -574,6 +591,7 @@
           <button class="btn btn--sm btn--g alternar-prev" id="ver-prev">${ic('eye')}Ver</button>
           <button class="btn btn--sm btn--p" id="enviar">${ic('send')}Enviar</button>
         </div>
+        <div id="faixa-pedido"></div>
         <div id="campos"></div>
       </section>
       <section class="preview" aria-label="Pré-visualização">
@@ -592,7 +610,8 @@
     desenhar();
     ligarForm($('#campos'), () => atual, secoes, mudou, desenhar);
     $('#campos').addEventListener('toggle', e => { const d = e.target; if (d.dataset && d.dataset.sec) { d.open ? abertasEd.add(d.dataset.sec) : abertasEd.delete(d.dataset.sec); if (d.open) irPara(d.dataset.sec); } }, true);
-    $('#ed-status').onchange = e => { atual.status = e.target.value; e.target.dataset.s = atual.status; WD.registrar(atual, atual.status, 'voce'); mudou(); };
+    $('#ed-status').onchange = e => { atual.status = e.target.value; e.target.dataset.s = atual.status; WD.registrar(atual, atual.status, 'voce'); mudou(); faixaPedido(); };
+    faixaPedido();
     $('#enviar').onclick = abrirEnvio;
     $('#pdf').onclick = menuPDF;
     $('#ver-prev').onclick = () => { $('#editor').classList.add('ver-prev'); $('#fechar-prev').hidden = false; escalar(); };

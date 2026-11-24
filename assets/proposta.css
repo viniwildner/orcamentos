@@ -506,3 +506,34 @@ html{accent-color:var(--verde);caret-color:var(--verde)}
 
 /* Selo de destaque nos opcionais ("Em alta") */
 .opcao b .selo--alta{margin-left:6px;padding:4px 7px;font-size:11px;letter-spacing:.3px;text-transform:uppercase;vertical-align:2px}
+
+/* ---------- Aprovação: confirmação e estados ---------- */
+.ficha{grid-template-columns:repeat(4,auto);justify-content:start;max-width:none}
+.ficha dt,.ficha dd{white-space:nowrap}
+.ficha div{padding:2px 20px}
+@media screen and (max-width:860px){.ficha{grid-template-columns:repeat(2,auto)}.ficha div:nth-child(3){border-left:0;padding-left:0}}
+@media screen{.assin .linhas-a{display:none}}
+.estado-ap{display:flex;gap:10px;align-items:flex-start;margin:16px 0 0;padding:12px 14px;border-radius:var(--raio);background:var(--superficie-elevada);font-size:15px;line-height:1.45}
+.estado-ap .i{width:20px;height:20px;flex:none;color:var(--destaque);margin-top:1px}
+.travado .opcao{cursor:default}
+.travado .extra:not(.on){opacity:.55}
+.travado .opcao .estado{display:none}
+.conf-ap{border:0;padding:0;border-radius:calc(var(--raio) + 4px);background:var(--fundo);color:var(--texto);width:min(480px,calc(100vw - 32px));max-height:calc(100dvh - 32px);box-shadow:0 30px 80px rgba(0,0,0,.35)}
+.conf-ap::backdrop{background:rgba(10,10,12,.55);backdrop-filter:blur(2px)}
+.conf-ap__in{padding:28px 28px 24px}
+.conf-ap h2{font:900 28px/1.15 var(--display);margin:6px 0 18px}
+.conf-ap__linhas{border-top:1px solid var(--borda-sutil)}
+.conf-ap .linha{display:flex;justify-content:space-between;gap:16px;padding:10px 0;border-bottom:1px solid var(--borda-sutil);font-size:15px;color:var(--texto-secundario)}
+.conf-ap .linha b{color:var(--texto);font-weight:600;white-space:nowrap}
+.conf-ap .linha--total{color:var(--texto);font-weight:600}
+.conf-ap .linha--total b{font-size:18px}
+.conf-ap .linha--forma{border-bottom:0;font-size:14px}
+.conf-ap__nota{margin:14px 0 0;font-size:14px;line-height:1.5;color:var(--texto-secundario)}
+.conf-ap__acoes{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:20px}
+.conf-ap__acoes .i,.aceite .btn .i{width:18px;height:18px}
+@media screen and (max-width:560px){
+  .conf-ap{width:100vw;max-width:100vw;margin:auto 0 0;border-radius:18px 18px 0 0;max-height:92dvh}
+  .conf-ap__in{padding:24px 20px calc(20px + env(safe-area-inset-bottom,0px))}
+  .conf-ap__acoes{flex-direction:column-reverse}
+  .conf-ap__acoes .btn{width:100%;height:48px}
+}

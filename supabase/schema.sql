@@ -113,26 +113,27 @@ as $$
 declare
   limpo jsonb;
 begin
+  -- O cliente não aprova sozinho: ele envia um pedido de aprovação, e você confirma no painel.
+  -- Depois do pedido (ou da aprovação), as escolhas ficam travadas.
   limpo := jsonb_strip_nulls(jsonb_build_object(
     'pagamento', p_escolha -> 'pagamento',
     'opcionais', p_escolha -> 'opcionais',
-    'aprovadoEm', case when p_escolha ? 'aprovadoEm' then to_jsonb(now()) end
+    'pedidoEm', case when p_escolha ? 'pedidoEm' then to_jsonb(now()) end
   ));
   update orcamentos
      set dados = jsonb_set(
                    jsonb_set(dados, '{escolha}', coalesce(dados -> 'escolha', '{}'::jsonb) || limpo),
                    '{historico}',
                    coalesce(dados -> 'historico', '[]'::jsonb) || case
-                     when limpo ? 'aprovadoEm' and status <> 'aprovado'
-                       then jsonb_build_array(jsonb_build_object('status', 'aprovado', 'em', now(), 'por', 'cliente'))
-                     when not (limpo ? 'aprovadoEm') and status = 'enviado'
+                     when status = 'enviado'
                        then jsonb_build_array(jsonb_build_object('status', 'visualizado', 'em', now(), 'por', 'cliente'))
                      else '[]'::jsonb end),
-         status = case when limpo ? 'aprovadoEm' then 'aprovado'
-                       when status = 'enviado' then 'visualizado'
-                       else status end,
+         status = case when status = 'enviado' then 'visualizado' else status end,
          atualizado_em = now()
-   where id = p_id and status not in ('rascunho', 'recusado');
+   where id = p_id
+     and status not in ('rascunho', 'recusado', 'aprovado')
+     and not (dados ? 'excluidoEm')
+     and not coalesce((dados -> 'escolha') ? 'pedidoEm', false);
 end;
 $$;
 

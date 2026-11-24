@@ -16,12 +16,23 @@
   if (r.config) { Object.assign(cfg, r.config); cfg.empresa = Object.assign({}, WD.CONFIG_PADRAO.empresa, r.config.empresa || {}); }
 
   document.title = `Proposta ${o.numero || ''} · ${o.cliente.empresa || cfg.empresa.nome}`;
-  const acoes = `<button class="btn btn-pdf so-tela" type="button" id="pdf" title="Salvar em PDF"><svg class="i" style="width:18px;height:18px"><use href="#i-download"/></svg><span>Baixar PDF</span></button>`;
+  const acoes = `<button class="btn-icone btn-pdf so-tela" type="button" id="pdf" title="Baixar PDF" aria-label="Baixar PDF"><svg class="i" style="width:20px;height:20px"><use href="#i-download"/></svg></button>`;
   app.innerHTML = WD.renderProposta(o, cfg, { acoes });
-  const bPdf = document.getElementById('pdf');
-  [bPdf, ...document.querySelectorAll('[data-pdf]')].forEach(b => b.addEventListener('click', () => WD.menuPDF(b, modo => WD.imprimir(window, modo))));
 
-  WD.ligarProposta(app, o, cfg, escolha => { WD.store.registrarEscolha(id, escolha).catch(e => console.warn(e)); });
+  const ligar = () => {
+    const bPdf = document.getElementById('pdf');
+    [bPdf, ...document.querySelectorAll('[data-pdf]')].filter(Boolean).forEach(b => b.addEventListener('click', () => WD.menuPDF(b, modo => WD.imprimir(window, modo))));
+    WD.ligarProposta(app, o, cfg, escolha => {
+      WD.store.registrarEscolha(id, escolha).catch(e => console.warn(e));
+      if (escolha.pedidoEm) {
+        o.escolha = Object.assign({}, o.escolha, escolha);
+        app.innerHTML = WD.renderProposta(o, cfg, { acoes });
+        ligar();
+        const fim = document.getElementById('aceite'); if (fim) fim.scrollIntoView();
+      }
+    });
+  };
+  ligar();
   WD.store.marcarVisto(id).catch(() => {});
   if (location.hash) { const alvo = document.querySelector(location.hash); if (alvo) alvo.scrollIntoView(); }
   const pedido = new URLSearchParams(location.search).get('pdf');

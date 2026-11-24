@@ -110,7 +110,7 @@ window.WD = window.WD || {};
       whatsapp: (o.cliente && o.cliente.whatsapp) || '', email: (o.cliente && o.cliente.email) || '',
       status: st, tipo: o.tipo || 'website', valor: com.bruto, comissao: com.valor, comissaoPara: com.para, liquido: com.liquido, mensal: com.mensal,
       historico: h, dataStatus: WD.dataStatus(o, h), entrega: crono && crono.entrega, inicio: crono && crono.inicio,
-      excluidoEm: o.excluidoEm || null,
+      excluidoEm: o.excluidoEm || null, pedidoEm: (o.escolha && o.escolha.pedidoEm) || null,
       atualizado_em: o.atualizadoEm || o.data
     };
   };
@@ -177,7 +177,8 @@ window.WD = window.WD || {};
         ${o.abertura ? `<p class="lead">${esc(o.abertura)}</p>` : ''}
         <dl class="ficha">
           <div><dt>Preparado para</dt><dd>${esc(o.cliente.contato || o.cliente.empresa || '—')}</dd></div>
-          <div><dt>Data</dt><dd class="num">${fmtData(o.data)}</dd></div>
+          <div><dt>Investimento</dt><dd class="num" data-total-ficha>R$ ${brl(c.final, false)}</dd></div>
+          <div><dt>Prazo</dt><dd class="num">${semanas} semana${semanas > 1 ? 's' : ''}</dd></div>
           <div><dt>Válida até</dt><dd class="num">${fmtData(validoAte)}</dd></div>
         </dl>
       </div>
@@ -282,7 +283,7 @@ window.WD = window.WD || {};
       <div class="cab"><p class="rotulo">Investimento</p><h2 class="titulo">Escolha como prefere <em>pagar</em></h2><p class="lead">Marque a forma de pagamento e os serviços opcionais. O valor se atualiza na hora.</p></div>
       <div class="inv">
         <div>
-          <div class="preco"><div class="preco__l">Total do projeto</div><div class="preco__v"><small>R$</small><span data-total-n>${brl(c.final)}</span></div><div class="linhas" data-linhas></div></div>
+          <div class="preco"><div class="preco__l" data-total-l>Total do projeto</div><div class="preco__v"><small>R$</small><span data-total-n>${brl(c.final)}</span></div><div class="linhas" data-linhas></div></div>
           <div class="pagto" role="radiogroup" aria-label="Forma de pagamento">
             ${c.formas.map(k => { const [t, d] = WD.textosPagamento(k, p, c).map(esc); return opcao(k, t, d, k === 'avista' ? 'R$ ' + brl(c.avista) : '', k === 'avista' && c.desc ? c.desc + '% off' : ''); }).join('')}
           </div>
@@ -316,15 +317,21 @@ window.WD = window.WD || {};
       <div class="conds">${(o.condicoes || []).map((x, i) => `<details${i === 0 ? ' open' : ''}><summary>${esc(x.titulo)}${ic('plus')}</summary><p>${esc(sub(x.texto))}</p></details>`).join('')}</div>
     </section>`);
 
-    const aprovado = o.escolha && o.escolha.aprovadoEm;
+    const ES = o.escolha || {};
+    const aprovado = o.status === 'aprovado' || !!ES.aprovadoEm;
+    const pedido = !aprovado && !!ES.pedidoEm;
+    const wa = String(E.whatsapp || '').replace(/\D/g, '');
+    const waDuvida = `https://wa.me/${wa}?text=${encodeURIComponent(`Olá! Tenho uma dúvida sobre a proposta ${o.numero || ''}.`)}`;
+    const quando = d => d ? ` em ${fmtData(String(d).slice(0, 10))}` : '';
     add('aceite', 'Próximos passos', `
     <section class="folha" id="aceite">
       <div class="aceite">
         <div>
           <p class="rotulo">Próximos passos</p>
-          <h2 class="titulo">${aprovado ? 'Proposta aprovada' : 'Vamos começar?'}</h2>
+          <h2 class="titulo">${aprovado ? 'Proposta <em>aprovada</em>' : pedido ? 'Recebemos o seu <em>pedido</em>' : 'Vamos começar?'}</h2>
+          ${aprovado ? `<p class="estado-ap">${ic('check')}<span>Aprovada${quando(ES.aprovadoEm)}. Agora seguimos com o contrato e a entrada.</span></p>` : pedido ? `<p class="estado-ap">${ic('check')}<span>Você pediu a aprovação${quando(ES.pedidoEm)}. A gente confirma pelo WhatsApp e envia o contrato.</span></p>` : ''}
           <ol class="passos">
-            <li><span><b>Aprove a proposta</b>Pelo botão de aprovar ou respondendo no WhatsApp.</span></li>
+            <li><span><b>Aprove a proposta</b>Confira o resumo das suas escolhas e confirme. A aprovação segue pelo WhatsApp.</span></li>
             <li><span><b>Assinatura e entrada</b>Enviamos o contrato digital e o Pix da entrada.</span></li>
             <li><span><b>Reunião de imersão</b>Em até 3 dias úteis marcamos a primeira conversa.</span></li>
           </ol>
@@ -336,11 +343,11 @@ window.WD = window.WD || {};
         </div>
         <div class="assin">
           <div class="ctas so-tela">
-            <a class="btn btn--p" id="aprovar" href="https://wa.me/${esc(E.whatsapp)}" target="_blank" rel="noopener">${aprovado ? 'Falar no WhatsApp' : 'Aprovar pelo WhatsApp'}</a>
-            <a class="btn btn--s" href="https://wa.me/${esc(E.whatsapp)}" target="_blank" rel="noopener">Tirar uma dúvida</a>
+            ${aprovado || pedido ? `<a class="btn btn--p" href="https://wa.me/${esc(wa)}" target="_blank" rel="noopener">${ic('whats')}Falar no WhatsApp</a>` : `<button class="btn btn--p" type="button" data-aprovar>Aprovar proposta</button>
+            <a class="btn btn--s" href="${esc(waDuvida)}" target="_blank" rel="noopener">Tirar uma dúvida</a>`}
             ${opts.acoes ? `<button class="btn btn--s so-celular" type="button" data-pdf>Baixar PDF</button>` : ''}
           </div>
-          <div class="linhas-a"><div>${esc(E.responsavel)}<br>${esc(E.nome)}</div><div>${esc(o.cliente.contato || '')}<br>${esc(o.cliente.empresa || '')}</div></div>
+          <div class="linhas-a so-print"><div>${esc(E.responsavel)}<br>${esc(E.nome)}</div><div>${esc(o.cliente.contato || '')}<br>${esc(o.cliente.empresa || '')}</div></div>
         </div>
       </div>
       <footer class="rodape"><span class="rodape__logo">${WD.logo(opts.base, esc(E.nome))}</span><span>${esc(E.cidade)}, ${dataExtenso(o.data)} · Proposta ${esc(num)}</span></footer>
@@ -352,13 +359,13 @@ window.WD = window.WD || {};
   <div class="topo__meta">Proposta <b class="num">${esc(num)}</b></div>
   ${opts.acoes || ''}
   ${opts.semTema ? '' : WD.botaoTema('btn-icone so-tela')}
-  <a class="btn btn--p so-tela" href="#aceite"><span>Aprovar<span class="so-largo"> proposta</span></span></a>
+  ${aprovado || pedido ? `<a class="btn btn--p so-tela" href="#aceite"><span>${aprovado ? 'Aprovada' : 'Pedido enviado'}</span></a>` : `<button class="btn btn--p so-tela" type="button" data-aprovar><span>Aprovar<span class="so-largo"> proposta</span></span></button>`}
 </div></header>
 <div class="casca">
   <nav class="indice" aria-label="Seções da proposta"><ol>${indice.map(([id, n]) => `<li><a href="#${id}">${n}</a></li>`).join('')}</ol></nav>
   <main>${secoes.join('\n')}</main>
 </div>
-<div class="barra-ap so-tela" aria-hidden="true"><div><small data-barra-forma></small><b class="num" data-barra-total></b></div><a class="btn btn--p" href="#aceite" tabindex="-1">${aprovado ? 'Ver próximos passos' : 'Aprovar proposta'}</a></div>`;
+<div class="barra-ap so-tela" aria-hidden="true"><div><small data-barra-forma></small><b class="num" data-barra-total></b></div>${aprovado || pedido ? `<a class="btn btn--p" href="#aceite" tabindex="-1">Próximos passos</a>` : `<button class="btn btn--p" type="button" data-aprovar tabindex="-1">Aprovar proposta</button>`}</div>`;
   };
 
   /* ---------- PDF: colorido (como na tela) ou preto e branco (fundo branco) ---------- */
@@ -384,7 +391,7 @@ window.WD = window.WD || {};
     document.querySelectorAll('.menu-pdf').forEach(m => m.remove());
     const m = document.createElement('div');
     m.className = 'menu-pdf'; m.setAttribute('role', 'menu');
-    m.innerHTML = `<button type="button" role="menuitem" data-m="cor"><svg><use href="#i-palette"/></svg><span>PDF colorido<small>Igual à tela, para enviar ao cliente</small></span></button>` +
+    m.innerHTML = `<button type="button" role="menuitem" data-m="cor"><svg><use href="#i-palette"/></svg><span>PDF colorido<small>Igual ao que aparece na tela</small></span></button>` +
       `<button type="button" role="menuitem" data-m="pb"><svg><use href="#i-printer"/></svg><span>Preto e branco<small>Fundo branco e pouca tinta, para imprimir</small></span></button>`;
     (botao.closest('dialog') || document.body).appendChild(m);
     const r = botao.getBoundingClientRect();
@@ -403,6 +410,13 @@ window.WD = window.WD || {};
   WD.ligarProposta = function (root, o, cfg, aoEscolher) {
     const $ = s => root.querySelector(s), $$ = s => [...root.querySelectorAll(s)];
     const estado = { pagamento: (o.escolha && o.escolha.pagamento) || null, opcionais: (o.escolha && o.escolha.opcionais) || (o.opcionais || []).map(x => !!x.marcado) };
+    const travado = o.status === 'aprovado' || !!(o.escolha && (o.escolha.aprovadoEm || o.escolha.pedidoEm));
+    if (travado) {
+      root.classList.add('travado');
+      $$('.opcao input').forEach(i => { i.disabled = true; });
+      const aj = $('.extras .ajuda.so-tela'); if (aj) aj.innerHTML = '<b>Escolhas confirmadas.</b> Para mudar algo, fale com a gente no WhatsApp.';
+      const ld = $('#investimento .lead'); if (ld) ld.textContent = 'Estas são as escolhas que você confirmou.';
+    }
 
     function atualizar(notificar) {
       const c = WD.calcular(o, estado);
@@ -413,6 +427,8 @@ window.WD = window.WD || {};
       const vc = $('[data-v="cartao"]'); if (vc) vc.textContent = `${c.nCartao}x R$ ${brl(c.cartao)}`;
       const va = $('[data-v="avista"]'); if (va) va.textContent = `R$ ${brl(c.avista)}`;
       $('[data-total-n]').textContent = brl(c.final);
+      const tf = $('[data-total-ficha]'); if (tf) tf.textContent = 'R$ ' + brl(c.final, false);
+      const tl = $('[data-total-l]'); if (tl) tl.textContent = c.forma === 'avista' ? 'Total à vista' : 'Total do projeto';
       $('[data-total]').textContent = 'R$ ' + brl(c.final, false);
       $('[data-forma]').textContent = WD.textoForma(c);
       let h = c.linhas.map(([n, v]) => `<div class="linha"><span>${esc(n)}</span><b>R$ ${brl(v)}</b></div>`).join('');
@@ -423,21 +439,51 @@ window.WD = window.WD || {};
       $('[data-linhas]').innerHTML = h;
       const m = $('[data-mensal]'); if (m) m.textContent = c.mensal ? `R$ ${brl(c.mensal)}/mês` : 'Nenhuma';
       const bt = $('[data-barra-total]'); if (bt) bt.textContent = `R$ ${brl(c.final)}`;
-      const bf = $('[data-barra-forma]'); if (bf) bf.textContent = WD.textoForma(c) + (c.mensal ? ` · + R$ ${brl(c.mensal, false)}/mês` : '');
-
-      const extras = (o.opcionais || []).filter((_, i) => estado.opcionais[i]).map(x => x.nome).join(', ');
-      const msg = `Olá! Aprovo a proposta ${o.numero || ''} (${o.cliente.empresa || WD.nomeTipo(o.tipo)}). Forma de pagamento: ${WD.textoForma(c)}. Total: R$ ${brl(c.final)}.` + (extras ? ` Opcionais: ${extras}.` : '') + (c.mensal ? ` Mensalidade: R$ ${brl(c.mensal)}.` : '');
-      const ap = $('#aprovar'); if (ap) ap.href = `https://wa.me/${cfg.empresa.whatsapp}?text=${encodeURIComponent(msg)}`;
-      if (notificar && aoEscolher) aoEscolher({ pagamento: c.forma, opcionais: estado.opcionais.slice() });
+      const bf = $('[data-barra-forma]'); if (bf) bf.textContent = 'Total, ' + WD.textoForma(c) + (c.mensal ? ` · + R$ ${brl(c.mensal, false)}/mês` : '');
+      if (notificar && aoEscolher && !travado) aoEscolher({ pagamento: c.forma, opcionais: estado.opcionais.slice() });
     }
+
+    /* Aprovar: mostra o resumo das escolhas e só registra o pedido quando o cliente confirma */
+    function confirmarAprovacao(origem) {
+      const c = WD.calcular(o, estado);
+      const extras = (o.opcionais || []).filter((_, i) => estado.opcionais[i]);
+      const unicos = extras.filter(x => x.tipo !== 'mensal').map(x => x.nome);
+      const msg = `Olá! Quero aprovar a proposta ${o.numero || ''} (${o.cliente.empresa || WD.nomeTipo(o.tipo)}). Forma de pagamento: ${WD.textoForma(c)}. Total: R$ ${brl(c.final)}.` + (unicos.length ? ` Opcionais: ${unicos.join(', ')}.` : '') + (c.mensal ? ` Mensalidade: R$ ${brl(c.mensal)}.` : '');
+      const val = c.forma === 'avista' ? c.avista : c.forma === 'cartao' ? c.cartao : c.parcela;
+      const rot = c.forma === 'avista' ? 'À vista no Pix' : c.forma === 'cartao' ? `${c.nCartao}x no cartão` : c.entrada > 0 ? `Entrada de R$ ${brl(c.entrada)} + ${c.nParc}x de` : `${c.nParc}x de`;
+      const d = document.createElement('dialog'); d.className = 'conf-ap';
+      d.setAttribute('aria-labelledby', 'conf-ap-t');
+      d.innerHTML = `<div class="conf-ap__in">
+        <p class="rotulo">Proposta ${esc(o.numero || '')}</p>
+        <h2 id="conf-ap-t">Confira antes de aprovar</h2>
+        <div class="conf-ap__linhas">${c.linhas.map(([n, v]) => `<div class="linha"><span>${esc(n)}</span><b class="num">R$ ${brl(v)}</b></div>`).join('')}
+          ${c.forma === 'avista' && c.desc ? `<div class="linha"><span>Desconto à vista (${c.desc}%)</span><b class="num">− R$ ${brl(c.total - c.avista)}</b></div>` : ''}
+          ${c.mensal ? `<div class="linha"><span>Mensalidade</span><b class="num">R$ ${brl(c.mensal)}/mês</b></div>` : ''}
+          <div class="linha linha--total"><span>${c.forma === 'avista' ? 'Total à vista no Pix' : 'Total'}</span><b class="num">R$ ${brl(c.final)}</b></div>
+          ${c.forma === 'avista' ? '' : `<div class="linha linha--forma"><span>${esc(rot)}</span><b class="num">R$ ${brl(val)}</b></div>`}</div>
+        <p class="conf-ap__nota">Ao confirmar, abrimos o WhatsApp com este resumo para você enviar. A gente responde com o contrato e o Pix da entrada.</p>
+        <div class="conf-ap__acoes"><button type="button" class="btn btn--s" data-mudar>Mudar escolhas</button>
+          <a class="btn btn--p" data-confirmar href="https://wa.me/${esc(String(cfg.empresa.whatsapp || '').replace(/\D/g, ''))}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">${ic('whats')}Confirmar e abrir WhatsApp</a></div>
+      </div>`;
+      document.body.appendChild(d);
+      const fechar = () => { d.close(); };
+      d.addEventListener('close', () => { d.remove(); if (origem && origem.isConnected) origem.focus(); });
+      d.addEventListener('click', e => { if (e.target === d) fechar(); });
+      d.querySelector('[data-mudar]').onclick = () => { fechar(); const inv = root.querySelector('#investimento') || document.getElementById('investimento'); if (inv) inv.scrollIntoView({ behavior: 'smooth' }); };
+      d.querySelector('[data-confirmar]').addEventListener('click', () => {
+        if (aoEscolher) aoEscolher({ pagamento: c.forma, opcionais: estado.opcionais.slice(), pedidoEm: new Date().toISOString() });
+        setTimeout(fechar, 50);
+      });
+      d.showModal();
+    }
+    $$('[data-aprovar]').forEach(b => b.addEventListener('click', () => confirmarAprovacao(b)));
+
     root.addEventListener('change', e => {
-      const lab = e.target.closest('.opcao'); if (!lab) return;
+      const lab = e.target.closest('.opcao'); if (!lab || travado) return;
       if (lab.dataset.pag) estado.pagamento = lab.dataset.pag;
       if (lab.dataset.extra != null) estado.opcionais[lab.dataset.extra] = e.target.checked;
       atualizar(true);
     });
-    const ap = $('#aprovar');
-    if (ap && aoEscolher) ap.addEventListener('click', () => { const c = WD.calcular(o, estado); aoEscolher({ pagamento: c.forma, opcionais: estado.opcionais.slice(), aprovadoEm: new Date().toISOString() }); });
     atualizar(false);
 
     /* Barra fixa no celular: aparece depois da capa e some ao chegar nos próximos passos */

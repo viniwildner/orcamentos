@@ -38,10 +38,12 @@ window.WD = window.WD || {};
     async salvarConfig(cfg) { await tx('config', 'readwrite', s => s.put({ id: 1, dados: clone(cfg) })); },
     async publico(id) { const o = await this.obter(id); if (!o) return null; return { orcamento: o, config: await this.obterConfig() }; },
     async registrarEscolha(id, escolha) {
-      const o = await this.obter(id); if (!o) return;
-      o.escolha = Object.assign({}, o.escolha, escolha);
-      if (escolha.aprovadoEm && o.status !== 'aprovado') { o.status = 'aprovado'; WD.registrar(o, 'aprovado', 'cliente'); }
-      else if (o.status === 'enviado') { o.status = 'visualizado'; WD.registrar(o, 'visualizado', 'cliente'); }
+      const o = await this.obter(id); if (!o || o.excluidoEm) return;
+      if (o.status === 'aprovado' || (o.escolha && o.escolha.pedidoEm)) return; // escolhas travadas depois do pedido
+      const limpo = { pagamento: escolha.pagamento, opcionais: escolha.opcionais };
+      if (escolha.pedidoEm) limpo.pedidoEm = new Date().toISOString();
+      o.escolha = Object.assign({}, o.escolha, limpo);
+      if (o.status === 'enviado') { o.status = 'visualizado'; WD.registrar(o, 'visualizado', 'cliente'); }
       await this.salvar(o);
     },
     async marcarVisto(id) { const o = await this.obter(id); if (o && o.status === 'enviado') { o.status = 'visualizado'; o.vistoEm = new Date().toISOString(); WD.registrar(o, 'visualizado', 'cliente'); await this.salvar(o); } }
