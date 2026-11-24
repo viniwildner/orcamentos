@@ -6,8 +6,49 @@ WD.ICONES = {
   target: 'Alvo', phone: 'Celular', search: 'Busca', trend: 'Crescimento', pen: 'Caneta', gauge: 'Velocidade',
   handshake: 'Aperto de mão', whats: 'WhatsApp', bed: 'Cama', panel: 'Painel', chart: 'Gráfico', cookie: 'Cookies',
   shield: 'Segurança', globe: 'Globo', mail: 'E-mail', calendar: 'Calendário', layout: 'Layout', code: 'Código',
-  rocket: 'Foguete', eye: 'Olho', flag: 'Bandeira', wallet: 'Carteira', life: 'Suporte'
+  rocket: 'Foguete', eye: 'Olho', flag: 'Bandeira', wallet: 'Carteira', life: 'Suporte',
+  palette: 'Paleta', type: 'Tipografia', book: 'Manual', pentool: 'Pena (vetor)', layers: 'Camadas', folder: 'Pasta',
+  card: 'Cartão', sparkles: 'Brilho', shapes: 'Formas'
 };
+
+/* Tipos de projeto. A cor identifica o tipo no painel; os textos adaptam a proposta. */
+WD.TIPOS = {
+  website: { nome: 'Website', desc: 'Site institucional, landing page ou blog', ativo: true },
+  identidade: { nome: 'Identidade visual', desc: 'Logotipo, cores, tipografia e manual de marca', ativo: true },
+  chatbot: { nome: 'Chatbot', desc: 'Em breve', ativo: false },
+  grafico: { nome: 'Peças gráficas', desc: 'Em breve', ativo: false }
+};
+WD.nomeTipo = t => (WD.TIPOS[t] || WD.TIPOS.website).nome;
+
+/* Textos da proposta que mudam conforme o tipo */
+WD.TEXTOS_TIPO = {
+  website: {
+    rotulo: 'Proposta de website', objeto: 'novo site', objetoCurto: 'site',
+    portTitulo: 'Alguns sites que <em>já entregamos</em>', portAlt: 'Site',
+    kpiPrazo: 'Do briefing ao site no ar',
+    prazoTitulo: 'Seu site no ar em', marcoAprov: 'Você vê o layout na semana', marcoTeste: 'Site de teste na semana', marcoTesteTxt: 'Navegue e revise antes de publicar.',
+    marcoFim: 'No ar na semana', mensal: 'Mensalidade a partir da publicação', tipoFinal: 'Publicação'
+  },
+  identidade: {
+    rotulo: 'Proposta de identidade visual', objeto: 'nova marca', objetoCurto: 'marca',
+    portTitulo: 'Algumas marcas que <em>já criamos</em>', portAlt: 'Marca',
+    kpiPrazo: 'Do briefing à marca pronta',
+    prazoTitulo: 'Sua marca pronta em', marcoAprov: 'Você vê os conceitos na semana', marcoTeste: 'Manual da marca na semana', marcoTesteTxt: 'Revise as regras e os arquivos antes da entrega final.',
+    marcoFim: 'Arquivos entregues na semana', mensal: 'Mensalidade a partir da entrega', tipoFinal: 'Entrega final'
+  }
+};
+WD.textosTipo = t => WD.TEXTOS_TIPO[t] || WD.TEXTOS_TIPO.website;
+
+/* Configurações efetivas de um tipo: o que o modelo do tipo define substitui o padrão geral (website). */
+WD.cfgDoTipo = function (cfg, tipo) {
+  const m = cfg && cfg.modelos && cfg.modelos[tipo];
+  if (!m || tipo === 'website') return cfg;
+  const r = Object.assign({}, cfg);
+  ['diferenciais', 'opcionais', 'incluso', 'naoIncluso', 'condicoes', 'mensagens'].forEach(k => { if (m[k]) r[k] = m[k]; });
+  r.empresa = Object.assign({}, cfg.empresa, { imagemCapa: m.imagemCapa || '' });
+  return r;
+};
+WD.portDoTipo = (p, tipo) => (p.tipos && p.tipos.length ? p.tipos : ['website']).includes(tipo || 'website');
 
 WD.CONFIG_PADRAO = {
   empresa: {
@@ -59,9 +100,9 @@ WD.CONFIG_PADRAO = {
     { icone: 'trend', titulo: 'Foco em resultado', texto: 'Cada página tem um objetivo claro: contato, reserva ou venda.' }
   ],
   portfolio: [
-    { id: 'cron', nome: 'CRON – Centro Regional de Oncologia', segmento: 'Saúde', imagem: 'img/cron-mockup.webp', link: 'https://wildnerdesign.com.br/projeto/cron/', texto: 'Site responsivo que organiza informações médicas complexas em uma navegação simples, para pacientes e profissionais.' },
-    { id: 'joner', nome: 'Imobiliária Joner', segmento: 'Imobiliária', imagem: 'img/joner-mockup.webp', link: 'https://wildnerdesign.com.br/projeto/imobiliaria-joner/', texto: 'Plataforma com filtros de imóveis, blog e plantão de vendas para uma imobiliária com mais de 30 anos de mercado.' },
-    { id: 'thomas', nome: 'Thomas Representações', segmento: 'Construção civil', imagem: 'img/thomas-mockup.webp', link: 'https://wildnerdesign.com.br/projeto/thomas-representacoes/', texto: 'Identidade visual e site para uma representante de pisos e porcelanatos, com foco em confiança e tradição.' }
+    { id: 'cron', nome: 'CRON – Centro Regional de Oncologia', segmento: 'Saúde', imagem: 'img/cron-mockup.webp', link: 'https://wildnerdesign.com.br/projeto/cron/', tipos: ['website'], texto: 'Site responsivo que organiza informações médicas complexas em uma navegação simples, para pacientes e profissionais.' },
+    { id: 'joner', nome: 'Imobiliária Joner', segmento: 'Imobiliária', imagem: 'img/joner-mockup.webp', link: 'https://wildnerdesign.com.br/projeto/imobiliaria-joner/', tipos: ['website'], texto: 'Plataforma com filtros de imóveis, blog e plantão de vendas para uma imobiliária com mais de 30 anos de mercado.' },
+    { id: 'thomas', nome: 'Thomas Representações', segmento: 'Construção civil', imagem: 'img/thomas-mockup.webp', link: 'https://wildnerdesign.com.br/projeto/thomas-representacoes/', tipos: ['website', 'identidade'], texto: 'Identidade visual e site para uma representante de pisos e porcelanatos, com foco em confiança e tradição.' }
   ],
   depoimentos: [
     { id: 'tomasi', foto: 'img/dep-carlos.webp', nome: 'Carlos Eduardo Tomasi', empresa: 'Thomas Representações', texto: 'A Wildner Design transformou nossa marca em algo que realmente conecta com nossos clientes. O trabalho foi ágil, criativo e superou todas as expectativas!' },
@@ -110,6 +151,66 @@ WD.CONFIG_PADRAO = {
     whatsapp: 'Olá, {contato}! Tudo bem? Aqui é o Marcus, da Wildner Design. Preparei a proposta do novo site da {empresa}. Você pode ver tudo, escolher a forma de pagamento e aprovar por este link: {link}\n\nQualquer dúvida, é só me chamar por aqui.',
     emailAssunto: 'Proposta {numero} · Novo site da {empresa}',
     emailCorpo: 'Olá, {contato}!\n\nSegue a proposta do novo site da {empresa}. No link abaixo você vê o escopo, o prazo e o investimento, escolhe a forma de pagamento e pode aprovar online:\n\n{link}\n\nSe preferir, a proposta também pode ser salva em PDF pelo botão no topo da página.\n\nFico à disposição.\n\nMarcus Vinicius Wildner\nWildner Design · (51) 98019-9884'
+  },
+  modelos: {
+    identidade: {
+      imagemCapa: 'img/capa-identidade.webp',
+      valorBase: 4800,
+      descricaoBase: 'Identidade visual completa',
+      conceitos: 2,
+      rodadas: 2,
+      diferenciais: [
+        { icone: 'pen', titulo: 'Marca exclusiva', texto: 'Nada de banco de imagens ou modelo pronto. Cada símbolo é desenhado do zero.' },
+        { icone: 'target', titulo: 'Estratégia antes do desenho', texto: 'Entendemos o seu público e os concorrentes antes de rabiscar a primeira ideia.' },
+        { icone: 'handshake', titulo: 'Atendimento direto', texto: 'Você fala com quem desenha a sua marca, sem intermediários.' },
+        { icone: 'layers', titulo: 'Pronta para tudo', texto: 'Funciona no site, nas redes, no impresso e na fachada, do tamanho de um ícone ao de um outdoor.' }
+      ],
+      entregaveis: [
+        { icone: 'pentool', titulo: 'Logotipo principal', texto: 'Desenhado do zero, nas versões horizontal e vertical.' },
+        { icone: 'shapes', titulo: 'Variações e símbolo', texto: 'Versão reduzida e ícone para espaços pequenos, como o perfil nas redes.' },
+        { icone: 'palette', titulo: 'Paleta de cores', texto: 'Cores principais e de apoio, com códigos para tela e impressão (HEX, RGB, CMYK e Pantone).' },
+        { icone: 'type', titulo: 'Tipografia', texto: 'As fontes da marca e como usar em títulos e textos.' },
+        { icone: 'book', titulo: 'Manual da marca', texto: 'PDF com as regras de uso: área de proteção, tamanho mínimo, fundos e usos proibidos.' },
+        { icone: 'folder', titulo: 'Arquivos finais', texto: 'Todas as versões em vetor e imagem, organizadas e prontas para usar.' },
+        { icone: 'sparkles', titulo: 'Elementos gráficos', texto: 'Grafismos e padrões que deixam as peças da marca reconhecíveis mesmo sem o logo.' },
+        { icone: 'eye', titulo: 'Ícones exclusivos', texto: 'Conjunto de ícones no estilo da marca para site, redes e materiais.' }
+      ],
+      aplicacoes: ['Cartão de visita', 'Assinatura de e-mail', 'Avatar e capa para redes sociais', 'Papel timbrado'],
+      formatos: ['AI', 'PDF', 'SVG', 'PNG', 'JPG'],
+      opcionais: [
+        { nome: 'Kit para redes sociais', desc: 'Modelos editáveis de post e story no Canva', valor: 900, tipo: 'unico' },
+        { nome: 'Papelaria completa', desc: 'Envelope, pasta, crachá e bloco de anotações', valor: 700, tipo: 'unico' },
+        { nome: 'Apresentação institucional', desc: 'Modelo de slides no padrão da marca', valor: 1200, tipo: 'unico' },
+        { nome: 'Registro da marca no INPI', desc: 'Acompanhamento do pedido; taxas do INPI à parte', valor: 1500, tipo: 'unico' },
+        { nome: 'Fachada e sinalização', desc: 'Projeto visual da fachada com simulação', valor: 1100, tipo: 'unico' }
+      ],
+      incluso: [
+        'Pesquisa de mercado e concorrentes',
+        'Até 2 conceitos de marca para escolher',
+        'Até 2 rodadas de ajustes no conceito escolhido',
+        'Manual da marca em PDF',
+        'Arquivos finais em vetor e imagem',
+        'Aplicações listadas na proposta'
+      ],
+      naoIncluso: [
+        'Registro da marca no INPI e taxas oficiais',
+        'Impressão de materiais (cartões, papelaria, fachada)',
+        'Produção de fotos e vídeos',
+        'Novos conceitos depois da escolha, se não forem contratados à parte'
+      ],
+      condicoes: [
+        { titulo: 'Início e prazo', texto: 'O projeto começa depois da assinatura e do pagamento da entrada. Enquanto aguardamos o briefing ou as aprovações, o prazo fica pausado e retomamos assim que recebermos o retorno.' },
+        { titulo: 'Conceitos e ajustes', texto: 'Apresentamos {conceitos} conceitos de marca. Depois que você escolher um, fazemos até {rodadas} rodadas de ajustes. Um conceito totalmente novo ou ajustes além disso custam R$ {hora} por hora, sempre com estimativa aprovada antes.' },
+        { titulo: 'Registro da marca', texto: 'Fazemos uma busca prévia de marcas parecidas, mas a disponibilidade para registro só é garantida pelo INPI. Recomendamos fazer o pedido logo após a aprovação.' },
+        { titulo: 'Propriedade', texto: 'Após a quitação, a marca e todos os arquivos são seus, com cessão total dos direitos de uso.' },
+        { titulo: 'Validade da proposta', texto: 'Esta proposta vale por {validade} dias, até {validoAte}.' }
+      ],
+      mensagens: {
+        whatsapp: 'Olá, {contato}! Tudo bem? Aqui é o Marcus, da Wildner Design. Preparei a proposta da nova identidade visual da {empresa}. Você pode ver tudo, escolher a forma de pagamento e aprovar por este link: {link}\n\nQualquer dúvida, é só me chamar por aqui.',
+        emailAssunto: 'Proposta {numero} · Identidade visual da {empresa}',
+        emailCorpo: 'Olá, {contato}!\n\nSegue a proposta da nova identidade visual da {empresa}. No link abaixo você vê o que vamos criar, o prazo e o investimento, escolhe a forma de pagamento e pode aprovar online:\n\n{link}\n\nSe preferir, a proposta também pode ser salva em PDF pelo botão no topo da página.\n\nFico à disposição.\n\nMarcus Vinicius Wildner\nWildner Design · (51) 98019-9884'
+      }
+    }
   },
   horaTecnica: 140,
   validadeDias: 30,
@@ -172,9 +273,61 @@ WD.novoOrcamentoWebsite = function (cfg) {
     opcionais: cfg.opcionais.map(o => ({ ...o, marcado: o.tipo === 'mensal' && /hospedagem/i.test(o.nome) })),
     incluso: cfg.incluso.slice(),
     naoIncluso: cfg.naoIncluso.slice(),
-    portfolio: cfg.portfolio.map(p => p.id),
+    portfolio: cfg.portfolio.filter(p => WD.portDoTipo(p, 'website')).map(p => p.id),
     depoimentos: cfg.depoimentos.map(d => d.id),
     condicoes: cfg.condicoes.map(c => ({ ...c })),
     escolha: null
   };
 };
+
+/* Modelo "Identidade visual": cria um orçamento novo já preenchido. */
+WD.novoOrcamentoIdentidade = function (cfg) {
+  const m = (cfg.modelos && cfg.modelos.identidade) || WD.CONFIG_PADRAO.modelos.identidade;
+  const tc = WD.cfgDoTipo(cfg, 'identidade');
+  const hoje = new Date();
+  return {
+    tipo: 'identidade',
+    status: 'rascunho',
+    numero: '',
+    data: hoje.toISOString().slice(0, 10),
+    criadoEm: hoje.toISOString(),
+    historico: [{ status: 'criado', em: hoje.toISOString(), por: 'voce' }],
+    validadeDias: cfg.validadeDias,
+    cliente: { empresa: '', contato: '', email: '', whatsapp: '', cidade: '' },
+    titulo: 'Uma nova marca para a {cliente}',
+    abertura: 'Uma identidade visual única, coerente em todos os pontos de contato e pronta para crescer com o seu negócio.',
+    contexto: '',
+    objetivos: [
+      { icone: 'eye', titulo: 'Ser lembrada', texto: 'Uma marca fácil de reconhecer e difícil de esquecer.' },
+      { icone: 'target', titulo: 'Transmitir valor', texto: 'Um visual que comunica a qualidade e o posicionamento do seu negócio.' },
+      { icone: 'layers', titulo: 'Consistência em tudo', texto: 'Regras claras para usar a marca no digital, no impresso e na fachada.' }
+    ],
+    conceitos: m.conceitos || 2,
+    rodadas: m.rodadas || 2,
+    suporteDias: cfg.suporteDias,
+    horaTecnica: cfg.horaTecnica,
+    entregaveis: (m.entregaveis || []).slice(0, 6).map(e => ({ ...e })),
+    aplicacoes: (m.aplicacoes || []).slice(),
+    formatos: (m.formatos || []).slice(),
+    etapas: [
+      { nome: 'Imersão', desc: 'Briefing, público e concorrentes', barra: 'Briefing', inicio: 1, duracao: 1, tipo: 'normal' },
+      { nome: 'Criação', desc: 'Pesquisa visual e esboços', barra: 'Conceitos', inicio: 2, duracao: 2, tipo: 'normal' },
+      { nome: 'Apresentação dos conceitos', desc: 'Você escolhe o caminho da marca', barra: 'Escolha', inicio: 4, duracao: 1, tipo: 'aprovacao' },
+      { nome: 'Refinamento', desc: 'Até 2 rodadas de ajustes', barra: 'Ajustes', inicio: 4, duracao: 2, tipo: 'normal' },
+      { nome: 'Manual e aplicações', desc: 'Regras de uso e peças da marca', barra: 'Manual', inicio: 5, duracao: 1, tipo: 'normal' },
+      { nome: 'Entrega', desc: 'Arquivos finais organizados', barra: 'Entrega', inicio: 6, duracao: 1, tipo: 'final' }
+    ],
+    valorBase: m.valorBase || 4800,
+    descricaoBase: m.descricaoBase || 'Identidade visual completa',
+    pagamento: JSON.parse(JSON.stringify(cfg.pagamento)),
+    pagamentoPadrao: 'parcelado',
+    opcionais: tc.opcionais.map(o => ({ ...o, marcado: false })),
+    incluso: tc.incluso.slice(),
+    naoIncluso: tc.naoIncluso.slice(),
+    portfolio: cfg.portfolio.filter(p => WD.portDoTipo(p, 'identidade')).map(p => p.id),
+    depoimentos: cfg.depoimentos.map(d => d.id),
+    condicoes: tc.condicoes.map(c => ({ ...c })),
+    escolha: null
+  };
+};
+WD.novoOrcamento = (tipo, cfg) => tipo === 'identidade' ? WD.novoOrcamentoIdentidade(cfg) : WD.novoOrcamentoWebsite(cfg);

@@ -427,3 +427,35 @@ dialog::backdrop{background:rgba(0,0,0,.6)}
 /* Polimento */
 ::selection{background:var(--verde);color:var(--sobre-verde)}
 html{accent-color:var(--verde);caret-color:var(--verde)}
+
+
+/* ---------- Tipos de projeto ---------- */
+:root{--t-website:#5cc8f5;--t-website-bg:rgba(92,200,245,.14);--t-identidade:#ffc14d;--t-identidade-bg:rgba(255,193,77,.14);--t-chatbot:#f58ad0;--t-chatbot-bg:rgba(245,138,208,.14);--t-grafico:#b9a4ff;--t-grafico-bg:rgba(185,164,255,.14)}
+:root[data-tema="claro"]{--t-website:#0a74a3;--t-website-bg:rgba(10,116,163,.1);--t-identidade:#9a6200;--t-identidade-bg:rgba(214,145,0,.14);--t-chatbot:#b0277f;--t-chatbot-bg:rgba(176,39,127,.1);--t-grafico:#5b3fc4;--t-grafico-bg:rgba(91,63,196,.1)}
+.t--website{--t:var(--t-website);--t-bg:var(--t-website-bg)}
+.t--identidade{--t:var(--t-identidade);--t-bg:var(--t-identidade-bg)}
+.t--chatbot{--t:var(--t-chatbot);--t-bg:var(--t-chatbot-bg)}
+.t--grafico{--t:var(--t-grafico);--t-bg:var(--t-grafico-bg)}
+.tipo-tag{display:inline-flex;align-items:center;gap:6px;color:var(--t,var(--texto-2));font-weight:600;font-size:12.5px;white-space:nowrap}
+.tipo-tag i{width:7px;height:7px;border-radius:2px;background:currentColor;flex:none}
+.av[class*="t--"]{background:var(--t-bg);color:var(--t)}
+.linha-o .cli>span>span{display:flex;align-items:center;min-width:0}
+.cli-contato{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-left:4px}
+.filtros-sep{width:1px;height:20px;background:var(--borda);margin:0 4px}
+.chip--tipo .tipo-tag{font-size:13.5px;font-weight:500}
+.chip--tipo.on{border-color:var(--t);background:var(--t-bg)}
+.chip--tipo.on .tipo-tag{font-weight:600}
+.form-topo .tit>.tipo-tag{display:flex;font-size:11.5px;margin-bottom:1px}
+.tipo .tipo-ponto{display:inline-block;width:9px;height:9px;border-radius:3px;background:var(--t);margin-right:8px;vertical-align:1px}
+.tipo:hover:not(:disabled){border-color:var(--t)}
+.seg-modelo{margin-top:16px;display:inline-flex}
+.seg-modelo button{display:inline-flex;align-items:center;gap:4px}
+.seg-modelo small{color:var(--texto-3);font-size:12.5px}
+@media (max-width:640px){ .seg-modelo small{display:none} }
+.chip--tipo .tipo-tag{color:var(--texto-2);font-size:13.5px}
+.chip--tipo .tipo-tag i{background:var(--t)}
+.chip--tipo.on .tipo-tag{color:var(--texto)}
+@media (min-width:861px){ .filtros .busca{flex:1 1 160px;max-width:260px} }
+.chip--tipo.on{color:var(--texto)}
+.chip--tipo.on>span.num{color:var(--texto-2);opacity:1}
+.miniatura{max-width:360px}

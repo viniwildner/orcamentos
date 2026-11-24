@@ -144,8 +144,15 @@ window.WD = window.WD || {};
     return `<div class="palco" aria-hidden="true"><div class="palco__circulo"></div><div class="note"><div class="note__tela">${site(false)}</div><div class="note__base"></div></div><div class="cel">${site(true)}</div></div>`;
   }
 
+  function mockupMarca() {
+    return `<div class="palco palco--marca" aria-hidden="true"><div class="palco__circulo"></div><div class="pm pm--folha"><i></i><span></span><span></span><span class="c"></span></div><div class="pm pm--cartao"><i></i></div><div class="pm pm--cartao pm--b"><span></span><span class="c"></span></div></div>`;
+  }
+
   WD.renderProposta = function (o, cfg, opts) {
     opts = opts || {};
+    const ident = o.tipo === 'identidade';
+    const T = WD.textosTipo(o.tipo);
+    cfg = WD.cfgDoTipo(cfg, o.tipo);
     const E = cfg.empresa;
     const c = WD.calcular(o, o.escolha);
     const validoAte = WD.util.addDias(o.data, o.validadeDias);
@@ -153,7 +160,7 @@ window.WD = window.WD || {};
     const num = o.numero || 'rascunho';
     const port = (o.portfolio || []).map(id => cfg.portfolio.find(p => p.id === id)).filter(Boolean);
     const deps = (o.depoimentos || []).map(id => cfg.depoimentos.find(d => d.id === id)).filter(Boolean);
-    const sub = s => String(s).replace('{suporte}', o.suporteDias).replace('{hora}', brl(o.horaTecnica, false)).replace('{validade}', o.validadeDias).replace('{validoAte}', fmtData(validoAte));
+    const sub = s => String(s).replace('{suporte}', o.suporteDias).replace('{hora}', brl(o.horaTecnica, false)).replace('{validade}', o.validadeDias).replace('{validoAte}', fmtData(validoAte)).replace('{conceitos}', o.conceitos || 2).replace('{rodadas}', o.rodadas || 2);
     const totalPaginas = 1 + (o.mapa || []).reduce((n, m) => n + 1 + (m.sub || []).length, 0);
     const paginas = o.paginasQtd || totalPaginas;
     const secoes = [];
@@ -164,7 +171,7 @@ window.WD = window.WD || {};
     <section class="folha capa" id="capa">
       <span class="so-print logo-print">${WD.logo(opts.base, esc(E.nome))}</span>
       <div>
-        <p class="rotulo">Proposta de website</p>
+        <p class="rotulo">${T.rotulo}</p>
         <h1>${titulo(o)}</h1>
         ${o.abertura ? `<p class="lead">${esc(o.abertura)}</p>` : ''}
         <dl class="ficha">
@@ -173,7 +180,7 @@ window.WD = window.WD || {};
           <div><dt>Válida até</dt><dd class="num">${fmtData(validoAte)}</dd></div>
         </dl>
       </div>
-      ${E.imagemCapa ? `<div class="palco palco--foto" aria-hidden="true"><img src="${esc(E.imagemCapa)}" alt=""></div>` : mockupCapa()}
+      ${E.imagemCapa ? `<div class="palco palco--foto" aria-hidden="true"><img src="${esc(E.imagemCapa)}" alt=""></div>` : ident ? mockupMarca() : mockupCapa()}
     </section>`);
 
     const marcas = (E.marcas || []).map(m => typeof m === 'string' ? { nome: m, logo: '' } : m).filter(m => m && m.nome);
@@ -198,24 +205,25 @@ window.WD = window.WD || {};
       <div class="cab"><p class="rotulo">Em resumo</p><h2 class="titulo">A proposta em <em>30 segundos</em></h2></div>
       <div class="resumo">
         <div class="kpi">${ic('wallet')}<div class="kpi__v verde num" data-total>R$ ${brl(c.final, false)}</div><div class="kpi__l">Investimento no projeto<br><span data-forma>${esc(WD.textoForma(c))}</span></div></div>
-        <div class="kpi">${ic('calendar')}<div class="kpi__v num">${semanas} semana${semanas > 1 ? 's' : ''}</div><div class="kpi__l">Do briefing ao site no ar</div></div>
-        <div class="kpi">${ic('layout')}<div class="kpi__v num">${paginas} página${paginas > 1 ? 's' : ''}</div><div class="kpi__l">Com painel para editar o conteúdo</div></div>
-        <div class="kpi">${ic('life')}<div class="kpi__v num">${esc(o.suporteDias)} dias</div><div class="kpi__l">De suporte e ajustes depois da publicação</div></div>
+        <div class="kpi">${ic('calendar')}<div class="kpi__v num">${semanas} semana${semanas > 1 ? 's' : ''}</div><div class="kpi__l">${T.kpiPrazo}</div></div>
+        ${ident ? `<div class="kpi">${ic('sparkles')}<div class="kpi__v num">${esc(o.conceitos || 2)} conceito${Number(o.conceitos) === 1 ? '' : 's'}</div><div class="kpi__l">Caminhos de marca para você escolher</div></div>
+        <div class="kpi">${ic('pen')}<div class="kpi__v num">${esc(o.rodadas || 2)} rodada${Number(o.rodadas) === 1 ? '' : 's'}</div><div class="kpi__l">De ajustes no conceito escolhido</div></div>` : `<div class="kpi">${ic('layout')}<div class="kpi__v num">${paginas} página${paginas > 1 ? 's' : ''}</div><div class="kpi__l">Com painel para editar o conteúdo</div></div>
+        <div class="kpi">${ic('life')}<div class="kpi__v num">${esc(o.suporteDias)} dias</div><div class="kpi__l">De suporte e ajustes depois da publicação</div></div>`}
       </div>
     </section>`);
 
     if (o.contexto || (o.objetivos || []).length) add('objetivo', 'Seu objetivo', `
     <section class="folha" id="objetivo">
-      <div class="cab"><p class="rotulo">O que entendemos</p><h2 class="titulo">Seu objetivo com o <em>novo site</em></h2>${o.contexto ? `<p class="lead">${esc(o.contexto)}</p>` : ''}</div>
+      <div class="cab"><p class="rotulo">O que entendemos</p><h2 class="titulo">Seu objetivo com ${ident ? 'a' : 'o'} <em>${T.objeto}</em></h2>${o.contexto ? `<p class="lead">${esc(o.contexto)}</p>` : ''}</div>
       <div class="objetivos">${(o.objetivos || []).map(x => `<div class="obj">${ic(x.icone)}<h3>${esc(x.titulo)}</h3><p>${esc(x.texto)}</p></div>`).join('')}</div>
     </section>`);
 
     if (port.length) add('portfolio', 'Projetos', `
     <section class="folha" id="portfolio">
-      <div class="cab"><p class="rotulo">Projetos recentes</p><h2 class="titulo">Alguns sites que <em>já entregamos</em></h2><p class="lead">Clique em cada um para ver o projeto completo.</p></div>
+      <div class="cab"><p class="rotulo">Projetos recentes</p><h2 class="titulo">${T.portTitulo}</h2><p class="lead">Clique em cada um para ver o projeto completo.</p></div>
       <div class="port">${port.map(p => `
         <article class="proj">
-          <a class="proj__img" href="${esc(p.link)}" target="_blank" rel="noopener">${p.imagem ? `<img class="proj__foto" src="${esc(p.imagem)}" alt="Site ${esc(p.nome)}" loading="lazy">` : ''}</a>
+          <a class="proj__img" href="${esc(p.link)}" target="_blank" rel="noopener">${p.imagem ? `<img class="proj__foto" src="${esc(p.imagem)}" alt="${T.portAlt} ${esc(p.nome)}" loading="lazy">` : ''}</a>
           <div class="proj__meta"><span class="tag">${esc(p.segmento)}</span></div>
           <h3>${esc(p.nome)}</h3><p>${esc(p.texto)}</p>
           ${p.link ? `<a class="proj__link" href="${esc(p.link)}" target="_blank" rel="noopener">Ver projeto</a>` : ''}
@@ -223,7 +231,16 @@ window.WD = window.WD || {};
     </section>`);
 
     const nRamos = (o.mapa || []).length;
-    add('escopo', 'O que vamos criar', `
+    if (ident) add('escopo', 'O que vamos criar', `
+    <section class="folha" id="escopo">
+      <div class="cab"><p class="rotulo">O que vamos criar</p><h2 class="titulo">Tudo o que a sua <em>nova marca</em> vai ter</h2><p class="lead">Estes são todos os itens do projeto. Tudo o que está aqui está no preço.</p></div>
+      ${(o.entregaveis || []).length ? `<div class="entregas">${o.entregaveis.map((e, i) => `<div class="entrega"><div class="entrega__topo"><span class="ic">${ic(e.icone)}</span><span class="n num">${String(i + 1).padStart(2, '0')}</span></div><h3>${esc(e.titulo)}</h3><p>${esc(e.texto)}</p></div>`).join('')}</div>` : ''}
+      ${(o.aplicacoes || []).length || (o.formatos || []).length ? `<div class="aplic">
+        ${(o.aplicacoes || []).length ? `<div><h3 class="sub-t">Aplicações incluídas</h3><ul class="servicos">${o.aplicacoes.map(a => `<li>${esc(a)}</li>`).join('')}</ul></div>` : ''}
+        ${(o.formatos || []).length ? `<div><h3 class="sub-t">Arquivos que você recebe</h3><ul class="servicos formatos">${o.formatos.map(a => `<li class="num">${esc(a)}</li>`).join('')}</ul></div>` : ''}
+      </div>` : ''}
+    </section>`);
+    else add('escopo', 'O que vamos criar', `
     <section class="folha" id="escopo">
       <div class="cab"><p class="rotulo">O que vamos criar</p><h2 class="titulo">O mapa do seu <em>novo site</em></h2><p class="lead">Estas são todas as páginas do projeto e como elas se conectam. Tudo o que está aqui está no preço.</p></div>
       <div class="mapa"><div class="arvore">
@@ -236,10 +253,10 @@ window.WD = window.WD || {};
     </section>`);
 
     const aprov = (o.etapas || []).find(e => e.tipo === 'aprovacao');
-    const fim = (o.etapas || []).find(e => e.tipo === 'final');
+    const fim = ident ? (o.etapas || []).find(e => /manual/i.test(e.nome || '')) : (o.etapas || []).find(e => e.tipo === 'final');
     add('processo', 'Prazo e etapas', `
     <section class="folha" id="processo">
-      <div class="cab"><p class="rotulo">Prazo e etapas</p><h2 class="titulo">Seu site no ar em <em>${semanas} semana${semanas > 1 ? 's' : ''}</em></h2><p class="lead">Você aprova cada etapa antes de seguirmos para a próxima. O prazo conta a partir do pagamento da entrada e do envio dos materiais.</p></div>
+      <div class="cab"><p class="rotulo">Prazo e etapas</p><h2 class="titulo">${T.prazoTitulo} <em>${semanas} semana${semanas > 1 ? 's' : ''}</em></h2><p class="lead">Você aprova cada etapa antes de seguirmos para a próxima. O prazo conta a partir do pagamento da entrada e do envio dos materiais.</p></div>
       <div class="gantt"><div class="gantt__grid" style="grid-template-columns:220px repeat(${semanas},minmax(0,1fr))">
         <div></div>${Array.from({ length: semanas }, (_, i) => `<div class="gantt__sem">Sem ${i + 1}</div>`).join('')}
         ${(o.etapas || []).map((e, i) => {
@@ -251,9 +268,9 @@ window.WD = window.WD || {};
         }).join('')}
       </div></div>
       <div class="marcos">
-        ${aprov ? `<div class="marco">${ic('eye')}<div><b>Você vê o layout na semana ${esc(aprov.inicio)}</b><span>${esc(aprov.desc)}</span></div></div>` : ''}
-        ${fim ? `<div class="marco">${ic('flag')}<div><b>Site de teste na semana ${Math.max(1, Number(fim.inicio))}</b><span>Navegue e revise antes de publicar.</span></div></div>` : ''}
-        <div class="marco">${ic('rocket')}<div><b>No ar na semana ${semanas}</b><span>Com ${esc(o.suporteDias)} dias de suporte inclusos.</span></div></div>
+        ${aprov ? `<div class="marco">${ic('eye')}<div><b>${T.marcoAprov} ${esc(aprov.inicio)}</b><span>${esc(aprov.desc)}</span></div></div>` : ''}
+        ${fim ? `<div class="marco">${ic('flag')}<div><b>${T.marcoTeste} ${Math.max(1, Number(fim.inicio))}</b><span>${T.marcoTesteTxt}</span></div></div>` : ''}
+        <div class="marco">${ic('rocket')}<div><b>${T.marcoFim} ${semanas}</b><span>${ident ? `Com ${esc(o.rodadas || 2)} rodadas de ajustes inclusas.` : `Com ${esc(o.suporteDias)} dias de suporte inclusos.`}</span></div></div>
       </div>
     </section>`);
 
@@ -272,7 +289,7 @@ window.WD = window.WD || {};
         ${(o.opcionais || []).length ? `<div class="extras">
           <h3>Serviços opcionais</h3><p class="ajuda so-tela"><b>Você escolhe:</b> toque para marcar os serviços que quer incluir ou desmarcar os que não quer. O total se atualiza na hora.</p><p class="ajuda so-print">Serviços que podem ser incluídos no projeto. Os marcados já estão somados no total.</p>
           ${o.opcionais.map((op, i) => `<label class="opcao extra${c.marcados[i] ? ' on' : ''}" data-extra="${i}"><input type="checkbox"${c.marcados[i] ? ' checked' : ''}><span class="marca"></span><span><b>${esc(op.nome)}</b><span class="d">${esc(op.desc)}</span><span class="estado so-tela"><span class="e-add">+ Adicionar</span><span class="e-ok">Incluído · toque para remover</span></span></span><span class="v num">R$ ${brl(op.valor, false)}${op.tipo === 'mensal' ? '<small>por mês</small>' : ''}</span></label>`).join('')}
-          <div class="mensal"><span>Mensalidade a partir da publicação</span><b data-mensal></b></div>
+          ${o.opcionais.some(op => op.tipo === 'mensal') ? `<div class="mensal"><span>${T.mensal}</span><b data-mensal></b></div>` : ''}
         </div>` : ''}
       </div>
     </section>`);
@@ -408,7 +425,7 @@ window.WD = window.WD || {};
       const bf = $('[data-barra-forma]'); if (bf) bf.textContent = WD.textoForma(c) + (c.mensal ? ` · + R$ ${brl(c.mensal, false)}/mês` : '');
 
       const extras = (o.opcionais || []).filter((_, i) => estado.opcionais[i]).map(x => x.nome).join(', ');
-      const msg = `Olá! Aprovo a proposta ${o.numero || ''} (${o.cliente.empresa || 'website'}). Forma de pagamento: ${WD.textoForma(c)}. Total: R$ ${brl(c.final)}.` + (extras ? ` Opcionais: ${extras}.` : '') + (c.mensal ? ` Mensalidade: R$ ${brl(c.mensal)}.` : '');
+      const msg = `Olá! Aprovo a proposta ${o.numero || ''} (${o.cliente.empresa || WD.nomeTipo(o.tipo)}). Forma de pagamento: ${WD.textoForma(c)}. Total: R$ ${brl(c.final)}.` + (extras ? ` Opcionais: ${extras}.` : '') + (c.mensal ? ` Mensalidade: R$ ${brl(c.mensal)}.` : '');
       const ap = $('#aprovar'); if (ap) ap.href = `https://wa.me/${cfg.empresa.whatsapp}?text=${encodeURIComponent(msg)}`;
       if (notificar && aoEscolher) aoEscolher({ pagamento: c.forma, opcionais: estado.opcionais.slice() });
     }

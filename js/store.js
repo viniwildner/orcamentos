@@ -88,6 +88,9 @@ window.WD = window.WD || {};
       const nomes = cfg.empresa.marcas.map(m => typeof m === 'string' ? m : m.nome);
       cfg.empresa.marcas = clone(padraoM).concat(nomes.filter(n => !padraoM.some(m => m.nome === n)).map(nome => ({ nome, logo: '' })));
     }
+    cfg.modelos = Object.assign({}, salvo.modelos || {});
+    Object.keys(WD.CONFIG_PADRAO.modelos).forEach(t => { cfg.modelos[t] = Object.assign(clone(WD.CONFIG_PADRAO.modelos[t]), (salvo.modelos || {})[t] || {}); });
+    (cfg.portfolio || []).forEach(p => { if (!p.tipos) { const d = WD.CONFIG_PADRAO.portfolio.find(x => x.id === p.id); p.tipos = d ? d.tipos.slice() : ['website']; } });
     (cfg.depoimentos || []).forEach(d => { const p = WD.CONFIG_PADRAO.depoimentos.find(x => x.id === d.id); if (p && d.foto === undefined) d.foto = p.foto; });
     return cfg;
   };

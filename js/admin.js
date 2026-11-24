@@ -175,8 +175,21 @@
 
   /* ---------- Esquema do orçamento (website) ---------- */
   const itemObj = { icone: 'target', titulo: '', texto: '' };
+  const tagTipo = t => `<span class="tipo-tag t--${esc(t || 'website')}"><i aria-hidden="true"></i>${esc(WD.nomeTipo(t))}</span>`;
+  function escopoIdentidade(tc) {
+    return { id: 'escopo', titulo: 'Escopo', desc: 'Entregáveis, aplicações e arquivos', campos: [
+      F('conceitos', 'Conceitos apresentados', 'numero', { w: 'm2', dica: 'Aparece no resumo.' }),
+      F('rodadas', 'Rodadas de ajustes', 'numero', { w: 'm2' }),
+      F('horaTecnica', 'Hora técnica', 'dinheiro', { w: 'm2' }),
+      F('entregaveis', 'O que vamos entregar', 'lista', { campos: [F('icone', 'Ícone', 'icone', { w: 'm2' }), F('titulo', 'Título', 'text', { w: 'm4' }), F('texto', 'Texto', 'textarea', { rows: 2 })], novo: () => clone({ icone: 'pen', titulo: '', texto: '' }), resumo: (x, i) => x.titulo || `Entregável ${i + 1}`, catalogo: () => (cfg.modelos.identidade.entregaveis || []), novoRotulo: 'Adicionar entregável' }),
+      F('aplicacoes', 'Aplicações incluídas', 'linhas', { rows: 4, dica: 'Peças em que a marca é aplicada. Uma por linha.' }),
+      F('formatos', 'Formatos dos arquivos', 'csv', { dica: 'Ex.: AI, PDF, SVG, PNG, JPG.' })
+    ] };
+  }
   function secoesOrcamento() {
-    return [
+    const ident = atual && atual.tipo === 'identidade';
+    const tc = WD.cfgDoTipo(cfg, ident ? 'identidade' : 'website');
+    const secs = [
       { id: 'cliente', titulo: 'Cliente e proposta', desc: 'Quem recebe, número e validade', campos: [
         F('cliente.empresa', 'Empresa', 'text', { ph: 'Pousada Maré Alta' }),
         F('cliente.contato', 'Nome do contato', 'text', { w: 'm3' }),
@@ -195,7 +208,7 @@
         F('contexto', 'Contexto', 'textarea', { rows: 4, dica: 'Ex.: a pousada depende de agências e quer mais reservas diretas. Se ficar vazio, só os objetivos aparecem.' }),
         F('objetivos', 'Objetivos', 'lista', { campos: [F('icone', 'Ícone', 'icone', { w: 'm2' }), F('titulo', 'Título', 'text', { w: 'm4' }), F('texto', 'Texto', 'textarea', { rows: 2 })], novo: () => clone(itemObj), resumo: (x, i) => x.titulo || `Objetivo ${i + 1}` })
       ] },
-      { id: 'escopo', titulo: 'Escopo', desc: 'Mapa do site, páginas e funcionalidades', campos: [
+      ident ? escopoIdentidade(tc) : { id: 'escopo', titulo: 'Escopo', desc: 'Mapa do site, páginas e funcionalidades', campos: [
         F('paginasQtd', 'Total de páginas', 'numero', { w: 'm2', dica: 'Aparece no resumo.' }),
         F('suporteDias', 'Dias de suporte', 'numero', { w: 'm2' }),
         F('horaTecnica', 'Hora técnica', 'dinheiro', { w: 'm2' }),
@@ -205,7 +218,7 @@
         F('funcionalidades', 'Funcionalidades incluídas', 'lista', { campos: [F('icone', 'Ícone', 'icone', { w: 'm2' }), F('titulo', 'Título', 'text', { w: 'm4' }), F('texto', 'Texto', 'text')], novo: () => clone({ icone: 'code', titulo: '', texto: '' }), resumo: (x, i) => x.titulo || `Funcionalidade ${i + 1}`, catalogo: () => cfg.funcionalidades })
       ] },
       { id: 'etapas', titulo: 'Prazo e etapas', desc: 'Cronograma em semanas', campos: [
-        F('etapas', '', 'lista', { campos: [F('nome', 'Etapa', 'text', { w: 'm3' }), F('barra', 'Texto na barra', 'text', { w: 'm3' }), F('desc', 'Descrição', 'text'), F('inicio', 'Começa na semana', 'numero', { w: 'm2' }), F('duracao', 'Duração (semanas)', 'numero', { w: 'm2' }), F('tipo', 'Tipo', 'select', { w: 'm2', opcoes: TIPOS_ETAPA })], novo: () => ({ nome: 'Nova etapa', desc: '', barra: '', inicio: 1, duracao: 1, tipo: 'normal' }), resumo: (x, i) => `${i + 1}. ${x.nome || 'Etapa'} · sem ${x.inicio}${x.duracao > 1 ? '–' + (Number(x.inicio) + Number(x.duracao) - 1) : ''}`, novoRotulo: 'Adicionar etapa' })
+        F('etapas', '', 'lista', { campos: [F('nome', 'Etapa', 'text', { w: 'm3' }), F('barra', 'Texto na barra', 'text', { w: 'm3' }), F('desc', 'Descrição', 'text'), F('inicio', 'Começa na semana', 'numero', { w: 'm2' }), F('duracao', 'Duração (semanas)', 'numero', { w: 'm2' }), F('tipo', 'Tipo', 'select', { w: 'm2', opcoes: Object.assign({}, TIPOS_ETAPA, { final: WD.textosTipo(atual && atual.tipo).tipoFinal }) })], novo: () => ({ nome: 'Nova etapa', desc: '', barra: '', inicio: 1, duracao: 1, tipo: 'normal' }), resumo: (x, i) => `${i + 1}. ${x.nome || 'Etapa'} · sem ${x.inicio}${x.duracao > 1 ? '–' + (Number(x.inicio) + Number(x.duracao) - 1) : ''}`, novoRotulo: 'Adicionar etapa' })
       ] },
       { id: 'valores', titulo: 'Investimento', desc: 'Valor, formas de pagamento e opcionais', campos: [
         F('descricaoBase', 'Descrição do projeto', 'text', { w: 'm4' }),
@@ -214,18 +227,18 @@
         F('pagamento', '', 'pagamentos'),
         F('pagamentoPadrao', 'Forma que já vem marcada', 'select', { opcoes: { avista: 'À vista no Pix', parcelado: 'Entrada + parcelas', cartao: 'Cartão de crédito' } }),
         F('', 'Serviços opcionais', 'subtitulo'),
-        F('opcionais', '', 'lista', { campos: [F('nome', 'Nome', 'text', { w: 'm4' }), F('valor', 'Valor', 'dinheiro', { w: 'm2' }), F('desc', 'Descrição', 'text'), F('tipo', 'Cobrança', 'select', { w: 'm3', opcoes: { unico: 'Valor único', mensal: 'Mensal' } }), F('marcado', 'Já vem marcado', 'check', { w: 'm3' })], novo: () => ({ nome: '', desc: '', valor: 0, tipo: 'unico', marcado: false }), resumo: (x, i) => `${x.nome || 'Opcional ' + (i + 1)} · R$ ${brl(x.valor, false)}${x.tipo === 'mensal' ? '/mês' : ''}`, catalogo: () => cfg.opcionais.map(o => ({ ...o, marcado: false })), novoRotulo: 'Adicionar opcional' })
+        F('opcionais', '', 'lista', { campos: [F('nome', 'Nome', 'text', { w: 'm4' }), F('valor', 'Valor', 'dinheiro', { w: 'm2' }), F('desc', 'Descrição', 'text'), F('tipo', 'Cobrança', 'select', { w: 'm3', opcoes: { unico: 'Valor único', mensal: 'Mensal' } }), F('marcado', 'Já vem marcado', 'check', { w: 'm3' })], novo: () => ({ nome: '', desc: '', valor: 0, tipo: 'unico', marcado: false }), resumo: (x, i) => `${x.nome || 'Opcional ' + (i + 1)} · R$ ${brl(x.valor, false)}${x.tipo === 'mensal' ? '/mês' : ''}`, catalogo: () => tc.opcionais.map(o => ({ ...o, marcado: false })), novoRotulo: 'Adicionar opcional' })
       ] },
       { id: 'incluso', titulo: 'Incluso e não incluso', campos: [
         F('incluso', 'Incluso no projeto', 'linhas', { rows: 6 }),
         F('naoIncluso', 'Não incluso', 'linhas', { rows: 4 })
       ] },
       { id: 'prova', titulo: 'Portfólio e depoimentos', desc: 'Escolha o que mostrar', campos: [
-        F('portfolio', 'Projetos', 'escolha', { opcoes: () => cfg.portfolio.map(p => [p.id, p.nome]), dica: 'Cadastre novos projetos em Configurações.' }),
+        F('portfolio', 'Projetos', 'escolha', { opcoes: () => cfg.portfolio.slice().sort((a, b) => WD.portDoTipo(b, atual.tipo) - WD.portDoTipo(a, atual.tipo)).map(p => [p.id, p.nome + (WD.portDoTipo(p, atual.tipo) ? '' : ' (' + (p.tipos || ['website']).map(WD.nomeTipo).join(', ').toLowerCase() + ')')]), dica: 'Cadastre novos projetos em Configurações e marque em quais tipos de proposta eles aparecem.' }),
         F('depoimentos', 'Depoimentos', 'escolha', { opcoes: () => cfg.depoimentos.map(d => [d.id, `${d.nome} · ${d.empresa}`]) })
       ] },
       { id: 'condicoes', titulo: 'Condições gerais', desc: 'Prazos, ajustes e validade', campos: [
-        F('condicoes', '', 'lista', { dica: 'Atalhos no texto: {suporte} dias de suporte, {hora} valor da hora, {validade} dias, {validoAte} data final.', campos: [F('titulo', 'Título', 'text'), F('texto', 'Texto', 'textarea', { rows: 3 })], novo: () => ({ titulo: '', texto: '' }), resumo: (x, i) => x.titulo || `Condição ${i + 1}`, catalogo: () => cfg.condicoes })
+        F('condicoes', '', 'lista', { dica: ident ? 'Atalhos no texto: {conceitos}, {rodadas}, {hora} valor da hora, {validade} dias, {validoAte} data final.' : 'Atalhos no texto: {suporte} dias de suporte, {hora} valor da hora, {validade} dias, {validoAte} data final.', campos: [F('titulo', 'Título', 'text'), F('texto', 'Texto', 'textarea', { rows: 3 })], novo: () => ({ titulo: '', texto: '' }), resumo: (x, i) => x.titulo || `Condição ${i + 1}`, catalogo: () => tc.condicoes })
       ] },
       { id: 'interno', titulo: 'Interno', desc: 'Comissão e anotações. Não aparece para o cliente', campos: [
         F('interno.comissaoPara', 'Comissão para', 'text', { w: 'm4', ph: 'Ex.: Flip Estratégia' }),
@@ -238,11 +251,43 @@
         F('interno.inicio', 'Início do projeto', 'data', { w: 'm3', dica: 'Em branco, o prazo conta a partir da aprovação.' })
       ] }
     ];
+    return secs;
   }
 
   /* ---------- Esquema das configurações ---------- */
   const novoId = () => Math.random().toString(36).slice(2, 8);
-  function secoesConfig() {
+  function secoesIdentidade() {
+    const b = 'modelos.identidade.';
+    return [
+      { id: 'id-padroes', titulo: 'Valores padrão', desc: 'Usados em toda proposta nova de identidade visual', campos: [
+        F(b + 'descricaoBase', 'Descrição do projeto', 'text', { w: 'm4' }), F(b + 'valorBase', 'Valor', 'dinheiro', { w: 'm2' }),
+        F(b + 'conceitos', 'Conceitos apresentados', 'numero', { w: 'm2' }), F(b + 'rodadas', 'Rodadas de ajustes', 'numero', { w: 'm2' }),
+        F(b + 'imagemCapa', 'Imagem da capa (mockup)', 'imagem', { dica: 'Aparece ao lado do título na primeira página. Vertical, de preferência 1100 × 1366 px, com fundo escuro.' })
+      ] },
+      { id: 'id-diferenciais', titulo: 'Diferenciais', desc: 'Bloco "Quem somos" nesta proposta', campos: [
+        F(b + 'diferenciais', '', 'lista', { campos: [F('icone', 'Ícone', 'icone', { w: 'm2' }), F('titulo', 'Título', 'text', { w: 'm4' }), F('texto', 'Texto', 'textarea', { rows: 2 })], novo: () => clone({ icone: 'pen', titulo: '', texto: '' }), resumo: (x, i) => x.titulo || `Diferencial ${i + 1}` })
+      ] },
+      { id: 'id-entregaveis', titulo: 'Catálogo de entregáveis', desc: 'Os 6 primeiros entram em toda proposta nova', campos: [
+        F(b + 'entregaveis', '', 'lista', { campos: [F('icone', 'Ícone', 'icone', { w: 'm2' }), F('titulo', 'Título', 'text', { w: 'm4' }), F('texto', 'Texto', 'textarea', { rows: 2 })], novo: () => ({ icone: 'pen', titulo: '', texto: '' }), resumo: (x, i) => x.titulo || `Entregável ${i + 1}` }),
+        F(b + 'aplicacoes', 'Aplicações incluídas', 'linhas', { rows: 4 }),
+        F(b + 'formatos', 'Formatos dos arquivos', 'csv')
+      ] },
+      { id: 'id-opcionais', titulo: 'Catálogo de opcionais', desc: 'Serviços extras desta proposta', campos: [
+        F(b + 'opcionais', '', 'lista', { campos: [F('nome', 'Nome', 'text', { w: 'm4' }), F('valor', 'Valor', 'dinheiro', { w: 'm2' }), F('desc', 'Descrição', 'text', { w: 'm4' }), F('tipo', 'Cobrança', 'select', { w: 'm2', opcoes: { unico: 'Valor único', mensal: 'Mensal' } })], novo: () => ({ nome: '', desc: '', valor: 0, tipo: 'unico' }), resumo: (x, i) => `${x.nome || 'Opcional ' + (i + 1)} · R$ ${brl(x.valor, false)}${x.tipo === 'mensal' ? '/mês' : ''}` })
+      ] },
+      { id: 'id-incluso', titulo: 'Incluso e não incluso', campos: [F(b + 'incluso', 'Incluso', 'linhas', { rows: 6 }), F(b + 'naoIncluso', 'Não incluso', 'linhas', { rows: 4 })] },
+      { id: 'id-condicoes', titulo: 'Condições gerais', desc: 'Texto padrão das condições', campos: [
+        F(b + 'condicoes', '', 'lista', { dica: 'Atalhos: {conceitos}, {rodadas}, {hora}, {validade}, {validoAte}.', campos: [F('titulo', 'Título', 'text'), F('texto', 'Texto', 'textarea', { rows: 3 })], novo: () => ({ titulo: '', texto: '' }), resumo: (x, i) => x.titulo || `Condição ${i + 1}` })
+      ] },
+      { id: 'id-mensagens', titulo: 'Mensagens de envio', desc: 'WhatsApp e e-mail desta proposta', campos: [
+        F(b + 'mensagens.whatsapp', 'Mensagem do WhatsApp', 'textarea', { rows: 5, dica: 'Atalhos: {contato}, {empresa}, {numero}, {link}.' }),
+        F(b + 'mensagens.emailAssunto', 'Assunto do e-mail', 'text'),
+        F(b + 'mensagens.emailCorpo', 'Texto do e-mail', 'textarea', { rows: 8 })
+      ] }
+    ];
+  }
+  function secoesConfig(modelo) {
+    if (modelo === 'identidade') return secoesIdentidade();
     return [
       { id: 'empresa', titulo: 'Empresa', desc: 'Dados que aparecem em todas as propostas', campos: [
         F('empresa.nome', 'Nome', 'text', { w: 'm3' }), F('empresa.responsavel', 'Responsável', 'text', { w: 'm3' }),
@@ -266,7 +311,7 @@
         F('diferenciais', '', 'lista', { campos: [F('icone', 'Ícone', 'icone', { w: 'm2' }), F('titulo', 'Título', 'text', { w: 'm4' }), F('texto', 'Texto', 'textarea', { rows: 2 })], novo: () => clone({ icone: 'pen', titulo: '', texto: '' }), resumo: (x, i) => x.titulo || `Diferencial ${i + 1}` })
       ] },
       { id: 'portfolio', titulo: 'Portfólio', desc: 'Projetos que você pode escolher em cada proposta', campos: [
-        F('portfolio', '', 'lista', { campos: [F('nome', 'Nome', 'text', { w: 'm4' }), F('segmento', 'Segmento', 'text', { w: 'm2' }), F('imagem', 'Imagem (mockup)', 'imagem'), F('link', 'Link do projeto', 'text', { input: 'url' }), F('texto', 'Descrição', 'textarea', { rows: 2 })], novo: () => ({ id: novoId(), nome: '', segmento: '', imagem: '', link: '', texto: '' }), resumo: (x, i) => x.nome || `Projeto ${i + 1}`, novoRotulo: 'Adicionar projeto' })
+        F('portfolio', '', 'lista', { campos: [F('nome', 'Nome', 'text', { w: 'm4' }), F('segmento', 'Segmento', 'text', { w: 'm2' }), F('imagem', 'Imagem (mockup)', 'imagem'), F('link', 'Link do projeto', 'text', { input: 'url' }), F('texto', 'Descrição', 'textarea', { rows: 2 }), F('tipos', 'Aparece nas propostas de', 'escolha', { opcoes: () => Object.entries(WD.TIPOS).filter(([, t]) => t.ativo).map(([k, t]) => [k, t.nome]) })], novo: () => ({ id: novoId(), nome: '', segmento: '', imagem: '', link: '', texto: '', tipos: ['website'] }), resumo: (x, i) => x.nome || `Projeto ${i + 1}`, novoRotulo: 'Adicionar projeto' })
       ] },
       { id: 'depoimentos', titulo: 'Depoimentos', campos: [
         F('depoimentos', '', 'lista', { campos: [F('nome', 'Nome', 'text', { w: 'm3' }), F('empresa', 'Empresa', 'text', { w: 'm3' }), F('foto', 'Foto', 'imagem', { dica: 'Quadrada, de preferência 400 × 400 px.' }), F('texto', 'Depoimento', 'textarea', { rows: 3 })], novo: () => ({ id: novoId(), nome: '', empresa: '', foto: '', texto: '' }), resumo: (x, i) => x.nome || `Depoimento ${i + 1}` })
@@ -335,7 +380,7 @@
         <i class="b f--aprovado" style="height:${m.apr / max * 100}%" title="Aprovado em ${m.nome}: R$ ${brl(m.apr, false)} (${m.nA}), comissão R$ ${brl(m.com, false)}">${m.apr ? `<em>${k(m.apr)}</em>` : ''}${m.com ? `<s class="f--comissao" style="height:${m.com / m.apr * 100}%"></s>` : ''}</i>
       </div><span>${m.nome}</span></div>`).join('')}</div>`;
   }
-  let filtro = 'todos', busca = '';
+  let filtro = 'todos', busca = '', filtroTipo = 'todos';
   async function telaLista() {
     marcarNav('lista');
     tela.innerHTML = `<div class="pagina"><p style="color:var(--texto-3)">Carregando…</p></div>`;
@@ -352,6 +397,8 @@
     const comAprov = soma(aprov, 'comissao'), comAbertos = soma(abertos, 'comissao');
     const entregas = aprov.filter(x => x.entrega).sort((a, b) => a.entrega.localeCompare(b.entrega));
     const semDados = lista.every(x => x.status === 'rascunho');
+    const tiposUsados = Object.keys(WD.TIPOS).filter(t => lista.some(x => (x.tipo || 'website') === t));
+    if (!tiposUsados.includes(filtroTipo)) filtroTipo = 'todos';
     tela.innerHTML = `<div class="pagina">
       <div class="cab-pag"><div><p class="sobretitulo">${saudacao()}, ${esc((cfg.empresa.responsavel || '').split(' ')[0] || 'Marcus')}</p><h1>Orçamentos</h1></div>
         <div class="acoes"><button class="btn btn--p" id="novo">${ic('plus')}Novo orçamento</button></div></div>
@@ -374,6 +421,7 @@
         </section>
       </div>`}
       <div class="filtros">${['todos', ...Object.keys(STATUS)].map(s => `<button class="chip${filtro === s ? ' on' : ''}" data-filtro="${s}">${s === 'todos' ? 'Todos' : STATUS[s]}<span class="num">${conta(s)}</span></button>`).join('')}
+        ${tiposUsados.length > 1 ? `<span class="filtros-sep" aria-hidden="true"></span>${tiposUsados.map(t => `<button class="chip chip--tipo t--${t}${filtroTipo === t ? ' on' : ''}" data-filtro-tipo="${t}" aria-pressed="${filtroTipo === t}">${tagTipo(t)}<span class="num">${lista.filter(x => (x.tipo || 'website') === t).length}</span></button>`).join('')}` : ''}
         <input class="busca" type="search" placeholder="Buscar cliente ou número" value="${esc(busca)}" id="busca"></div>
       <div class="lista" id="lista"></div>
       <p style="margin-top:24px;font-size:13px;color:var(--texto-3)">Orçamentos do sistema anterior: <a href="antigo.html">abrir sistema antigo</a>.</p></div>`;
@@ -381,17 +429,18 @@
     $('#novo').onclick = escolherTipo;
     $$('[data-filtro]').forEach(b => b.onclick = () => { filtro = b.dataset.filtro; $$('[data-filtro]').forEach(x => x.classList.toggle('on', x === b)); desenharLista(); });
     $('#busca').oninput = e => { busca = e.target.value; desenharLista(); };
+    $$('[data-filtro-tipo]').forEach(b => b.onclick = () => { filtroTipo = filtroTipo === b.dataset.filtroTipo ? 'todos' : b.dataset.filtroTipo; $$('[data-filtro-tipo]').forEach(x => { const on = x.dataset.filtroTipo === filtroTipo; x.classList.toggle('on', on); x.setAttribute('aria-pressed', on); }); desenharLista(); });
   }
 
   function desenharLista() {
     const q = busca.trim().toLowerCase();
-    const itens = lista.filter(x => (filtro === 'todos' || x.status === filtro) && (!q || `${x.cliente} ${x.contato} ${x.numero}`.toLowerCase().includes(q)));
+    const itens = lista.filter(x => (filtro === 'todos' || x.status === filtro) && (filtroTipo === 'todos' || (x.tipo || 'website') === filtroTipo) && (!q || `${x.cliente} ${x.contato} ${x.numero}`.toLowerCase().includes(q)));
     const el = $('#lista');
     if (!lista.length) { el.innerHTML = `<div class="vazio"><h2>Nenhum orçamento ainda</h2><p>Crie o primeiro. Ele já vem preenchido com os seus padrões.</p><p style="margin-top:16px"><button class="btn btn--p" onclick="document.getElementById('novo').click()">${ic('plus')}Novo orçamento</button></p></div>`; return; }
     if (!itens.length) { el.innerHTML = `<div class="vazio">Nada encontrado com esse filtro.</div>`; return; }
     el.innerHTML = `<div class="linha-o cab"><span>Cliente</span><span class="col-num">Nº</span><span class="col-status">Status</span><span class="col-valor">Valor</span><span class="col-data">Entrega</span><span class="col-acts">Ações</span></div>` +
       itens.map(x => `<div class="linha-o" data-id="${x.id}" tabindex="0" role="button" aria-label="Abrir ${esc(x.cliente || 'orçamento')}">
-        <span class="cli"><i class="av" aria-hidden="true">${esc(iniciais(x.cliente))}</i><span><b>${esc(x.cliente || 'Sem nome')}</b><span>${esc(x.contato || 'Website')}</span></span></span>
+        <span class="cli"><i class="av t--${esc(x.tipo || 'website')}" aria-hidden="true">${esc(iniciais(x.cliente))}</i><span><b>${esc(x.cliente || 'Sem nome')}</b><span>${tagTipo(x.tipo)}${x.contato ? `<span class="cli-contato"> · ${esc(x.contato)}</span>` : ''}</span></span></span>
         <span class="col-num num">${esc(x.numero || '—')}</span>
         <span class="col-status"><span class="status status--${x.status}">${STATUS[x.status] || x.status}</span><small class="num" title="${x.dataStatus ? esc(new Date(x.dataStatus).toLocaleString('pt-BR')) : ''}">${x.dataStatus ? 'em ' + new Date(x.dataStatus).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : ''}</small></span>
         <span class="col-valor num">R$ ${brl(x.valor, false)}${x.comissao ? `<small title="Comissão${x.comissaoPara ? ' para ' + esc(x.comissaoPara) : ''}">com. R$ ${brl(x.comissao, false)}</small>` : ''}</span>
@@ -412,19 +461,16 @@
 
   function escolherTipo() {
     dlg.innerHTML = `<div class="dlg"><h2>Novo orçamento</h2><p>Escolha o tipo de projeto. Tudo já vem preenchido com os seus padrões e pode ser alterado.</p>
-      <div class="tipos"><button class="tipo" data-tipo="website"><b>Website</b><span>Site institucional, landing page ou blog</span></button>
-      <button class="tipo" disabled><b>Identidade visual</b><span>Em breve</span></button>
-      <button class="tipo" disabled><b>Chatbot</b><span>Em breve</span></button>
-      <button class="tipo" disabled><b>Peças gráficas</b><span>Em breve</span></button></div>
+      <div class="tipos">${Object.entries(WD.TIPOS).map(([k, t]) => `<button class="tipo t--${k}" ${t.ativo ? `data-tipo="${k}"` : 'disabled'}><b><i class="tipo-ponto" aria-hidden="true"></i>${esc(t.nome)}</b><span>${esc(t.desc)}</span></button>`).join('')}</div>
       <div class="acoes"><button class="btn btn--g" data-fechar>Cancelar</button></div></div>`;
     dlg.showModal();
     dlg.querySelector('[data-fechar]').onclick = () => dlg.close();
-    dlg.querySelector('[data-tipo="website"]').onclick = async () => {
+    $$('[data-tipo]', dlg).forEach(b => b.onclick = async () => {
       dlg.close();
-      const o = WD.novoOrcamentoWebsite(cfg);
+      const o = WD.novoOrcamento(b.dataset.tipo, cfg);
       o.numero = await WD.proximoNumero(lista);
       try { const s = await WD.store.salvar(o); location.hash = '#/o/' + s.id; } catch (e) { erro(e); }
-    };
+    });
   }
 
   async function duplicar(id) {
@@ -477,7 +523,7 @@
       <section class="form" aria-label="Formulário">
         <div class="form-topo">
           <a class="icone-btn" href="#/" title="Voltar">${ic('back')}</a>
-          <div class="tit"><b id="ed-tit"></b><span><span class="salvo" id="salvo">Salvo</span><span class="ed-valor num" id="ed-valor"></span></span></div>
+          <div class="tit">${tagTipo(atual.tipo)}<b id="ed-tit"></b><span><span class="salvo" id="salvo">Salvo</span><span class="ed-valor num" id="ed-valor"></span></span></div>
           <select id="ed-status" class="sel-status" data-s="${atual.status}" aria-label="Status">${Object.entries(STATUS).map(([k, n]) => `<option value="${k}"${atual.status === k ? ' selected' : ''}>${n}</option>`).join('')}</select>
           <button class="btn btn--sm btn--g alternar-prev" id="ver-prev">${ic('eye')}Ver</button>
           <button class="btn btn--sm btn--p" id="enviar">${ic('send')}Enviar</button>
@@ -605,7 +651,7 @@
 
   async function abrirEnvio(o, canalIni) {
     if (o && o.id) { if (atual !== o) { await salvarAgora(); atual = o; sujo = false; } } else await salvarAgora();
-    const m = cfg.mensagens || WD.CONFIG_PADRAO.mensagens;
+    const m = WD.cfgDoTipo(cfg, atual.tipo).mensagens || WD.CONFIG_PADRAO.mensagens;
     const local = WD.store.modo === 'local';
     dlg.innerHTML = `<div class="dlg"><h2>Enviar proposta</h2>
       ${local ? `<p class="aviso-local" style="margin:0"><span class="ponto"></span><span><b>Modo local:</b> o link só abre neste navegador. Envie o PDF até conectar o Supabase.</span></p>` : `<p>O cliente abre a proposta pelo link, escolhe a forma de pagamento e aprova. Você acompanha o status aqui.</p>`}
@@ -676,17 +722,20 @@
   }
 
   /* ---------- Configurações ---------- */
-  let abertasCfg = new Set(['empresa']);
+  let abertasCfg = new Set(['empresa', 'id-padroes']);
+  let modeloCfg = 'website';
   function telaConfig() {
     marcarNav('config');
-    const secoes = secoesConfig();
+    const secoes = secoesConfig(modeloCfg);
     const rascunho = clone(cfg);
     let timer = null;
-    tela.innerHTML = `<div class="pagina"><div class="cab-pag"><div><h1>Configurações</h1><p>Padrões que entram em todo orçamento novo. Cada orçamento continua editável.</p></div>
+    tela.innerHTML = `<div class="pagina"><div class="cab-pag"><div><h1>Configurações</h1><p>Padrões que entram em todo orçamento novo. Cada orçamento continua editável.</p>
+      <div class="seg seg-modelo" role="tablist" aria-label="Modelo">${Object.entries(WD.TIPOS).filter(([, t]) => t.ativo).map(([k, t]) => `<button role="tab" aria-selected="${modeloCfg === k}" class="${modeloCfg === k ? 'on' : ''}" data-modelo="${k}">${tagTipo(k)}${k === 'website' ? '<small> e dados gerais</small>' : ''}</button>`).join('')}</div></div>
       <div class="acoes"><button class="btn btn--g btn--perigo" id="restaurar">Restaurar padrões</button><span class="salvo" id="cfg-salvo" style="align-self:center">Salvo</span></div></div>
       <div class="cfg"><nav class="cfg-nav">${secoes.map(s => `<a href="#sec-${s.id}" data-ir="${s.id}">${s.titulo}</a>`).join('')}</nav><div id="cfg-campos"></div></div></div>`;
     const desenhar = () => { $$('#cfg-campos details').forEach(d => d.open ? abertasCfg.add(d.dataset.sec) : abertasCfg.delete(d.dataset.sec)); $('#cfg-campos').innerHTML = secoesHTML(secoes, rascunho, abertasCfg); };
     desenhar();
+    $$('[data-modelo]').forEach(b => b.onclick = () => { if (modeloCfg === b.dataset.modelo) return; clearTimeout(timer); salvar().then(() => { modeloCfg = b.dataset.modelo; telaConfig(); }); });
     $$('[data-ir]').forEach(a => a.onclick = e => { e.preventDefault(); const d = $('#sec-' + a.dataset.ir); d.open = true; d.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
     const salvar = async () => { try { (rascunho.portfolio || []).forEach(p => { if (!p.id) p.id = novoId(); }); (rascunho.depoimentos || []).forEach(p => { if (!p.id) p.id = novoId(); }); await WD.store.salvarConfig(rascunho); cfg = clone(rascunho); $('#cfg-salvo').textContent = 'Salvo'; } catch (e) { erro(e); } };
     ligarForm($('#cfg-campos'), () => rascunho, secoes, () => { $('#cfg-salvo').textContent = 'Salvando…'; clearTimeout(timer); timer = setTimeout(salvar, 800); }, desenhar);
