@@ -110,6 +110,7 @@ window.WD = window.WD || {};
       whatsapp: (o.cliente && o.cliente.whatsapp) || '', email: (o.cliente && o.cliente.email) || '',
       status: st, tipo: o.tipo || 'website', valor: com.bruto, comissao: com.valor, comissaoPara: com.para, liquido: com.liquido, mensal: com.mensal,
       historico: h, dataStatus: WD.dataStatus(o, h), entrega: crono && crono.entrega, inicio: crono && crono.inicio,
+      excluidoEm: o.excluidoEm || null,
       atualizado_em: o.atualizadoEm || o.data
     };
   };

@@ -82,7 +82,7 @@ as $$
     'config', (select c.dados from configuracoes c where c.id = 1)
   )
   from orcamentos o
-  where o.id = p_id and o.status <> 'rascunho';
+  where o.id = p_id and o.status <> 'rascunho' and not (o.dados ? 'excluidoEm');
 $$;
 
 create or replace function public.marcar_visto(p_id uuid)

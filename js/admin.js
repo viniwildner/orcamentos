@@ -14,7 +14,13 @@
   const ICONES = Object.entries(WD.ICONES);
 
   let cfg = null;
-  let lista = [];
+  let lista = [], lixeira = [], todos = [];
+  async function carregarLista() {
+    todos = await WD.store.listar();
+    todos.sort((a, b) => String(b.atualizado_em).localeCompare(String(a.atualizado_em)));
+    lista = todos.filter(x => !x.excluidoEm);
+    lixeira = todos.filter(x => x.excluidoEm).sort((a, b) => String(b.excluidoEm).localeCompare(String(a.excluidoEm)));
+  }
   let atual = null;          // orçamento aberto no editor
   let timerSalvar = null, timerPrev = null, sujo = false;
 
@@ -383,8 +389,7 @@
   async function telaLista() {
     marcarNav('lista');
     tela.innerHTML = `<div class="pagina"><p style="color:var(--texto-3)">Carregando…</p></div>`;
-    try { lista = await WD.store.listar(); } catch (e) { return erro(e); }
-    lista.sort((a, b) => String(b.atualizado_em).localeCompare(String(a.atualizado_em)));
+    try { await carregarLista(); } catch (e) { return erro(e); }
     const soma = (arr, k) => arr.reduce((n, x) => n + Number(x[k || 'valor'] || 0), 0);
     const abertos = lista.filter(x => x.status === 'enviado' || x.status === 'visualizado');
     const aprov = lista.filter(x => x.status === 'aprovado');
@@ -423,7 +428,8 @@
         ${tiposUsados.length > 1 ? `<span class="filtros-sep" aria-hidden="true"></span>${tiposUsados.map(t => `<button class="chip chip--tipo t--${t}${filtroTipo === t ? ' on' : ''}" data-filtro-tipo="${t}" aria-pressed="${filtroTipo === t}">${tagTipo(t)}<span class="num">${lista.filter(x => (x.tipo || 'website') === t).length}</span></button>`).join('')}` : ''}
         <input class="busca" type="search" placeholder="Buscar cliente ou número" value="${esc(busca)}" id="busca"></div>
       <div class="lista" id="lista"></div>
-      <p style="margin-top:24px;font-size:13px;color:var(--texto-3)">Orçamentos do sistema anterior: <a href="antigo.html">abrir sistema antigo</a>.</p></div>`;
+      <div class="rodape-lista"><a class="link-lixeira" href="#/lixeira">${ic('trash')}Lixeira<span class="num">${lixeira.length}</span></a>
+        <p>Orçamentos do sistema anterior: <a href="antigo.html">abrir sistema antigo</a>.</p></div></div>`;
     desenharLista();
     $('#novo').onclick = escolherTipo;
     $$('[data-filtro]').forEach(b => b.onclick = () => { filtro = b.dataset.filtro; $$('[data-filtro]').forEach(x => x.classList.toggle('on', x === b)); desenharLista(); });
@@ -467,7 +473,7 @@
     $$('[data-tipo]', dlg).forEach(b => b.onclick = async () => {
       dlg.close();
       const o = WD.novoOrcamento(b.dataset.tipo, cfg);
-      o.numero = await WD.proximoNumero(lista);
+      o.numero = await WD.proximoNumero(todos);
       try { const s = await WD.store.salvar(o); location.hash = '#/o/' + s.id; } catch (e) { erro(e); }
     });
   }
@@ -475,7 +481,7 @@
   async function duplicar(id) {
     try {
       const o = await WD.store.obter(id); delete o.id;
-      Object.assign(o, { numero: await WD.proximoNumero(lista), status: 'rascunho', escolha: null, data: new Date().toISOString().slice(0, 10), criadoEm: new Date().toISOString(), enviadoEm: null, vistoEm: null, historico: [{ status: 'criado', em: new Date().toISOString(), por: 'voce' }] });
+      Object.assign(o, { numero: await WD.proximoNumero(todos), status: 'rascunho', escolha: null, data: new Date().toISOString().slice(0, 10), criadoEm: new Date().toISOString(), enviadoEm: null, vistoEm: null, historico: [{ status: 'criado', em: new Date().toISOString(), por: 'voce' }] });
       if (o.interno) delete o.interno.inicio;
       o.cliente = Object.assign({}, o.cliente, { empresa: (o.cliente.empresa || '') + ' (cópia)' });
       const s = await WD.store.salvar(o); toast('Orçamento duplicado'); location.hash = '#/o/' + s.id;
@@ -486,7 +492,7 @@
     document.querySelectorAll('.menu-pdf').forEach(m => m.remove());
     const m = document.createElement('div'); m.className = 'menu-pdf menu-mais'; m.setAttribute('role', 'menu');
     m.innerHTML = `<button type="button" role="menuitem" data-m="dup">${ic('copy')}<span>Duplicar<small>Cria um rascunho com o mesmo conteúdo</small></span></button>` +
-      `<button type="button" role="menuitem" data-m="del" class="perigo">${ic('trash')}<span>Excluir<small>Dá para desfazer por alguns segundos</small></span></button>`;
+      `<button type="button" role="menuitem" data-m="del" class="perigo">${ic('trash')}<span>Excluir<small>Vai para a lixeira, dá para restaurar</small></span></button>`;
     document.body.appendChild(m);
     const r = botao.getBoundingClientRect(); const acima = r.bottom + m.offsetHeight + 12 > innerHeight;
     m.style.top = (acima ? r.top - m.offsetHeight - 6 : r.bottom + 6) + 'px';
@@ -498,16 +504,51 @@
     m.addEventListener('click', e => { const b = e.target.closest('[data-m]'); if (!b) return; fechar(); b.dataset.m === 'dup' ? duplicar(id) : excluir(id); });
     m.querySelector('button').focus();
   }
-  /* Excluir com "Desfazer": some da lista na hora e só apaga de vez depois de 8 segundos */
-  const pendentes = new Map();
-  function excluir(id) {
+  /* Excluir manda para a lixeira; de lá dá para restaurar ou apagar de vez */
+  async function excluir(id) {
     const x = lista.find(l => l.id === id); if (!x) return;
-    lista = lista.filter(l => l.id !== id); desenharLista();
-    const apagar = async () => { pendentes.delete(id); try { await WD.store.excluir(id); } catch (e) { erro(e); lista.push(x); desenharLista(); } };
-    const t = setTimeout(apagar, 8000); pendentes.set(id, apagar);
-    toast(`Orçamento ${x.numero || ''} excluído`, 'Desfazer', () => { clearTimeout(t); pendentes.delete(id); lista.push(x); lista.sort((a, b) => String(b.atualizado_em).localeCompare(String(a.atualizado_em))); desenharLista(); toast('Orçamento restaurado'); }, 8000);
+    try { await WD.store.excluir(id); } catch (e) { return erro(e); }
+    await telaLista();
+    toast(`Orçamento ${x.numero || ''} foi para a lixeira`, 'Desfazer', async () => { try { await WD.store.restaurar(id); await telaLista(); toast('Orçamento restaurado'); } catch (e) { erro(e); } }, 8000);
   }
-  window.addEventListener('pagehide', () => pendentes.forEach(f => f()));
+
+  /* ---------- Lixeira ---------- */
+  async function telaLixeira() {
+    marcarNav('lista');
+    tela.innerHTML = `<div class="pagina"><p style="color:var(--texto-3)">Carregando…</p></div>`;
+    try { await carregarLista(); } catch (e) { return erro(e); }
+    tela.innerHTML = `<div class="pagina">
+      <div class="cab-pag"><div><p class="sobretitulo"><a href="#/" class="voltar-lista">${ic('back')}Orçamentos</a></p><h1>Lixeira</h1>
+        <p class="cab-lead">Orçamentos excluídos ficam aqui até você restaurar ou apagar de vez. O link deles não abre para o cliente.</p></div></div>
+      <div class="lista" id="lista-lixeira"></div></div>`;
+    const el = $('#lista-lixeira');
+    if (!lixeira.length) { el.innerHTML = `<div class="vazio"><h2>A lixeira está vazia</h2><p>Quando você excluir um orçamento, ele aparece aqui.</p></div>`; return; }
+    el.innerHTML = `<div class="linha-o linha-lix cab"><span>Cliente</span><span class="col-num">Nº</span><span class="col-status">Status</span><span class="col-valor">Valor</span><span class="col-data">Excluído em</span><span class="col-acts">Ações</span></div>` +
+      lixeira.map(x => `<div class="linha-o linha-lix" data-lix="${x.id}">
+        <span class="cli"><i class="av t--${esc(x.tipo || 'website')}" aria-hidden="true">${esc(iniciais(x.cliente))}</i><span><b>${esc(x.cliente || 'Sem nome')}</b><span>${tagTipo(x.tipo)}${x.contato ? `<span class="cli-contato"> · ${esc(x.contato)}</span>` : ''}</span></span></span>
+        <span class="col-num num">${esc(x.numero || '—')}</span>
+        <span class="col-status"><span class="status status--${x.status}">${STATUS[x.status] || x.status}</span></span>
+        <span class="col-valor num">R$ ${brl(x.valor, false)}</span>
+        <span class="col-data"><b class="num">${new Date(x.excluidoEm).toLocaleDateString('pt-BR')}</b></span>
+        <span class="acts"><button class="btn btn--sm btn--g" data-restaurar="${x.id}">${ic('restore')}Restaurar</button>
+          <button class="icone-btn perigo" title="Apagar de vez" aria-label="Apagar de vez" data-apagar="${x.id}">${ic('trash')}</button></span></div>`).join('');
+    $$('[data-restaurar]', el).forEach(b => b.onclick = async () => {
+      b.disabled = true;
+      try { await WD.store.restaurar(b.dataset.restaurar); toast('Orçamento restaurado'); await telaLixeira(); } catch (e) { b.disabled = false; erro(e); }
+    });
+    $$('[data-apagar]', el).forEach(b => b.onclick = () => apagarDeVez(lixeira.find(x => x.id === b.dataset.apagar)));
+  }
+  function apagarDeVez(x) {
+    if (!x) return;
+    dlg.innerHTML = `<div class="dlg"><h2>Apagar de vez?</h2><p>O orçamento ${esc(x.numero || '')} de <b>${esc(x.cliente || 'Sem nome')}</b> será apagado para sempre. Isso não pode ser desfeito.</p>
+      <div class="acoes"><button class="btn btn--g" data-fechar>Cancelar</button><button class="btn btn--apagar" data-ok>${ic('trash')}Apagar de vez</button></div></div>`;
+    dlg.showModal();
+    dlg.querySelector('[data-fechar]').onclick = () => dlg.close();
+    dlg.querySelector('[data-ok]').onclick = async () => {
+      dlg.close();
+      try { await WD.store.apagarDeVez(x.id); toast('Orçamento apagado'); await telaLixeira(); } catch (e) { erro(e); }
+    };
+  }
 
   /* ---------- Editor ---------- */
   let abertasEd = new Set(['cliente']);
@@ -516,7 +557,13 @@
     marcarNav('lista');
     try { atual = await WD.store.obter(id); } catch (e) { return erro(e); }
     if (!atual) { tela.innerHTML = `<div class="pagina"><div class="vazio"><h2>Orçamento não encontrado</h2><p><a href="#/">Voltar para a lista</a></p></div></div>`; return; }
-    if (!lista.length) { try { lista = await WD.store.listar(); } catch (e) { /* segue */ } }
+    if (atual.excluidoEm) {
+      const idL = atual.id; atual = null;
+      tela.innerHTML = `<div class="pagina"><div class="vazio"><h2>Este orçamento está na lixeira</h2><p>Restaure para voltar a editar.</p><p style="margin-top:16px;display:flex;gap:8px;justify-content:center"><a class="btn btn--g" href="#/lixeira">Ver lixeira</a><button class="btn btn--p" id="restaurar-ed">${ic('restore')}Restaurar</button></p></div></div>`;
+      $('#restaurar-ed').onclick = async () => { try { await WD.store.restaurar(idL); toast('Orçamento restaurado'); telaEditor(idL); } catch (e) { erro(e); } };
+      return;
+    }
+    if (!todos.length) { try { await carregarLista(); } catch (e) { /* segue */ } }
     sujo = false;
     tela.innerHTML = `<div class="editor" id="editor">
       <section class="form" aria-label="Formulário">
@@ -753,6 +800,7 @@
     const h = location.hash.replace(/^#/, '') || '/';
     if (h.startsWith('/o/')) return telaEditor(h.slice(3));
     if (h === '/config') return telaConfig();
+    if (h === '/lixeira') return telaLixeira();
     return telaLista();
   }
 
