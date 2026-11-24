@@ -543,3 +543,31 @@ html{accent-color:var(--verde);caret-color:var(--verde)}
 .ver-mais{margin-top:4px;width:100%}
 .ver-mais .i{width:18px;height:18px}
 .travado .ver-mais{display:none}
+
+/* Fechamento mais ousado: o "Vamos começar?" vira o ponto alto da página, na superfície escura da marca */
+@media screen{
+  .aceite{background:#111013;color:#fff;padding:clamp(32px,6vw,80px);gap:clamp(32px,5vw,72px);align-items:end;
+    --texto:#fff;--texto-secundario:rgba(255,255,255,.75);--texto-suave:#9495a0;--borda:rgba(255,255,255,.2);--borda-sutil:rgba(255,255,255,.075);
+    --superficie-elevada:#4d4c4e;--superficie:#242326;--destaque:var(--verde);--foco:var(--verde)}
+  :root:not([data-tema="claro"]) .aceite{background:#1b1a1d;box-shadow:inset 0 0 0 1px var(--borda-sutil)}
+  .aceite::before{width:min(620px,70vw);right:-260px;top:-340px}
+  .aceite .rotulo{color:var(--verde)}
+  .aceite .titulo{font:900 clamp(46px,7vw,92px)/.98 var(--display);letter-spacing:-.025em;max-width:9ch;margin-top:14px}
+  .aceite .passos{margin-top:36px}
+  .aceite-total{display:grid;gap:6px;padding-bottom:28px;border-bottom:1px solid var(--borda)}
+  .aceite-total span{font:500 12px/1.4 var(--sans);text-transform:uppercase;letter-spacing:.08em;color:var(--texto-suave)}
+  .aceite-total b{font:700 clamp(40px,5vw,60px)/1 var(--sans);letter-spacing:-.03em;color:#fff}
+  .aceite-total small{font-size:15px;color:var(--texto-secundario)}
+  .aceite .ctas{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+  .aceite .ctas .btn{height:58px;font-size:16.5px;padding:0 28px}
+  .aceite .ctas .btn--s{background:transparent;box-shadow:inset 0 0 0 1px var(--borda);color:#fff}
+  .aceite .ctas .btn--s:hover{background:rgba(255,255,255,.06)}
+  .aceite .contato a:hover{color:var(--verde)}
+  .aceite .estado-ap{color:var(--texto-secundario)}
+}
+@media screen and (max-width:860px){
+  .aceite{align-items:stretch}
+  .aceite::before{width:260px;right:-120px;top:-150px}
+  .aceite .titulo{max-width:8ch}
+}
+@media screen{.aceite .estado-ap{background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px var(--borda-sutil)}}

@@ -333,7 +333,7 @@ window.WD = window.WD || {};
       <div class="aceite">
         <div>
           <p class="rotulo">Próximos passos</p>
-          <h2 class="titulo">${aprovado ? 'Proposta <em>aprovada</em>' : pedido ? 'Recebemos o seu <em>pedido</em>' : 'Vamos começar?'}</h2>
+          <h2 class="titulo">${aprovado ? 'Proposta <em>aprovada</em>' : pedido ? 'Recebemos o seu <em>pedido</em>' : 'Vamos <em>começar?</em>'}</h2>
           ${aprovado ? `<p class="estado-ap">${ic('check')}<span>Aprovada${quando(ES.aprovadoEm)}. Agora seguimos com o contrato e a entrada.</span></p>` : pedido ? `<p class="estado-ap">${ic('check')}<span>Você pediu a aprovação${quando(ES.pedidoEm)}. A gente confirma pelo WhatsApp e envia o contrato.</span></p>` : ''}
           <ol class="passos">
             <li><span><b>Aprove a proposta</b>Confira o resumo das suas escolhas e confirme. A aprovação segue pelo WhatsApp.</span></li>
@@ -347,6 +347,7 @@ window.WD = window.WD || {};
           </div>
         </div>
         <div class="assin">
+          <div class="aceite-total so-tela"><span>Sua escolha</span><b class="num" data-total-aceite>R$ ${brl(c.final, false)}</b><small data-forma-aceite>${esc(WD.textoForma(c))}</small></div>
           <div class="ctas so-tela">
             ${aprovado || pedido ? `<a class="btn btn--p" href="https://wa.me/${esc(wa)}" target="_blank" rel="noopener">${ic('whats')}Falar no WhatsApp</a>` : `<button class="btn btn--p" type="button" data-aprovar>Aprovar proposta</button>
             <a class="btn btn--s" href="${esc(waDuvida)}" target="_blank" rel="noopener">Tirar uma dúvida</a>`}
@@ -436,6 +437,8 @@ window.WD = window.WD || {};
       const tl = $('[data-total-l]'); if (tl) tl.textContent = c.forma === 'avista' ? 'Total à vista' : 'Total do projeto';
       $('[data-total]').textContent = 'R$ ' + brl(c.final, false);
       $('[data-forma]').textContent = WD.textoForma(c);
+      const ta = $('[data-total-aceite]'); if (ta) ta.textContent = 'R$ ' + brl(c.final, false);
+      const fa = $('[data-forma-aceite]'); if (fa) fa.textContent = WD.textoForma(c);
       let h = c.linhas.map(([n, v]) => `<div class="linha"><span>${esc(n)}</span><b>R$ ${brl(v)}</b></div>`).join('');
       if (c.forma === 'avista' && c.desc) h += `<div class="linha"><span>Desconto à vista (${c.desc}%)</span><b>− R$ ${brl(c.total - c.avista)}</b></div>`;
       const rot = c.forma === 'avista' ? 'Total à vista' : c.forma === 'cartao' ? `${c.nCartao}x no cartão` : c.entrada > 0 ? `Entrada de R$ ${brl(c.entrada)} + ${c.nParc}x` : `${c.nParc}x`;
