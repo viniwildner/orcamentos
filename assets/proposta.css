@@ -155,9 +155,6 @@ main{min-width:0;max-width:1040px;padding-bottom:96px}
 .proj h3{margin:0;font:600 18px/1.3 var(--sans)}
 .proj p{margin:0;color:var(--texto-secundario);font-size:14.5px}
 .proj__meta{display:flex;gap:8px;flex-wrap:wrap}
-.s-clin{--s-bg:#ffffff;--s-tx:#1d2b4f;--s-ac:#3c7bf0;--s-img:linear-gradient(135deg,#dbe8ff,#a9c6ff)}
-.s-rest{--s-bg:#1b1410;--s-tx:#f1e4d3;--s-ac:#d9a441;--s-img:radial-gradient(circle at 50% 55%,#c45a2a 0 22%,#7a2f15 23% 30%,#3a2418 31%)}
-.s-ind{--s-bg:#eef1f4;--s-tx:#0f2236;--s-ac:#f2b705;--s-img:repeating-linear-gradient(90deg,#9fb0c0 0 8%,#c9d3dc 8% 16%)}
 
 /* 06 Escopo */
 .mapa{background:var(--superficie);border-radius:var(--raio);padding:32px;overflow-x:auto}
@@ -433,3 +430,36 @@ body{overflow-x:clip}
   .aceite .titulo{max-width:70%}
 }
 @media screen and (max-width:420px){ .so-largo{display:none} }
+
+
+/* ---------- Polimento ---------- */
+::selection{background:var(--verde);color:var(--sobre-verde)}
+html{accent-color:var(--verde);caret-color:var(--verde)}
+.so-celular{display:none}
+.btn span{white-space:nowrap}
+.g-sem{display:none}
+@media screen and (max-width:560px){
+  .so-celular{display:inline-flex}
+  /* Mapa do site vira lista: sem rolagem lateral no celular */
+  .mapa{padding:20px;overflow:visible}
+  .arvore{min-width:0;align-items:stretch}
+  .no{white-space:normal;text-align:left}
+  .no--raiz{align-self:flex-start}
+  .tronco{margin-left:18px;height:14px}
+  .ramos{flex-direction:column;gap:8px;padding:0 0 0 18px;margin-left:18px;border-left:1px solid var(--borda)}
+  .ramos::before{display:none}
+  .ramos--um{border-left:1px solid var(--borda)}
+  .ramo{align-items:stretch;padding-top:8px}
+  .ramo::before{top:calc(8px + 1.3em);left:-18px;width:14px;height:1px}
+  .ramo .sub{align-items:stretch;margin:6px 0 0 18px}
+  .util{justify-content:flex-start;margin-top:16px}
+  /* Cronograma vira lista com as semanas escritas */
+  .gantt{padding:20px;overflow:visible}
+  .gantt__grid{min-width:0;grid-template-columns:minmax(0,1fr)!important;row-gap:0}
+  .gantt__sem,.gantt .barra{display:none}
+  .gantt__et{grid-row:auto!important;padding:12px 0;border-top:1px solid var(--borda-sutil)}
+  .gantt__et:nth-child(1 of .gantt__et){border-top:0;padding-top:0}
+  .g-sem{display:inline-block;margin:8px 0 0 28px;padding:4px 10px;border-radius:999px;background:var(--superficie-elevada);font:600 12px/1.2 var(--sans);font-style:normal;color:var(--texto);font-variant-numeric:tabular-nums}
+  .et--aprov .g-sem{background:transparent;border:1px dashed var(--verde);color:var(--destaque)}
+  .et--fim .g-sem{background:var(--verde);color:var(--sobre-verde)}
+}

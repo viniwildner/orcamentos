@@ -245,7 +245,8 @@ window.WD = window.WD || {};
         ${(o.etapas || []).map((e, i) => {
           const ini = Math.max(1, Number(e.inicio || 1)), dur = Math.max(1, Number(e.duracao || 1));
           const cls = e.tipo === 'aprovacao' ? ' barra--aprov' : e.tipo === 'final' ? ' barra--fim' : '';
-          return `<div class="gantt__et" style="grid-row:${i + 2};grid-column:1"><b><span>${i + 1}</span>${esc(e.nome)}</b><small>${esc(e.desc)}</small></div>` +
+          const fimSem = Math.min(semanas, ini + dur - 1);
+          return `<div class="gantt__et${cls ? ' et' + cls.replace(' barra', '') : ''}" style="grid-row:${i + 2};grid-column:1"><b><span>${i + 1}</span>${esc(e.nome)}</b><small>${esc(e.desc)}</small><em class="g-sem">${fimSem > ini ? `Semanas ${ini} a ${fimSem}` : `Semana ${ini}`}</em></div>` +
             `<div class="barra${cls}" style="grid-row:${i + 2};grid-column:${ini + 1} / span ${Math.min(dur, semanas - ini + 1)}">${esc(e.barra || e.nome)}</div>`;
         }).join('')}
       </div></div>
@@ -319,7 +320,7 @@ window.WD = window.WD || {};
           <div class="ctas so-tela">
             <a class="btn btn--p" id="aprovar" href="https://wa.me/${esc(E.whatsapp)}" target="_blank" rel="noopener">${aprovado ? 'Falar no WhatsApp' : 'Aprovar pelo WhatsApp'}</a>
             <a class="btn btn--s" href="https://wa.me/${esc(E.whatsapp)}" target="_blank" rel="noopener">Tirar uma dúvida</a>
-            ${opts.acoes ? `<button class="btn btn--s" type="button" data-pdf>Baixar PDF</button>` : ''}
+            ${opts.acoes ? `<button class="btn btn--s so-celular" type="button" data-pdf>Baixar PDF</button>` : ''}
           </div>
           <div class="linhas-a"><div>${esc(E.responsavel)}<br>${esc(E.nome)}</div><div>${esc(o.cliente.contato || '')}<br>${esc(o.cliente.empresa || '')}</div></div>
         </div>
@@ -333,7 +334,7 @@ window.WD = window.WD || {};
   <div class="topo__meta">Proposta <b class="num">${esc(num)}</b></div>
   ${opts.acoes || ''}
   ${opts.semTema ? '' : WD.botaoTema('btn-icone so-tela')}
-  <a class="btn btn--p so-tela" href="#aceite">Aprovar<span class="so-largo"> proposta</span></a>
+  <a class="btn btn--p so-tela" href="#aceite"><span>Aprovar<span class="so-largo"> proposta</span></span></a>
 </div></header>
 <div class="casca">
   <nav class="indice" aria-label="Seções da proposta"><ol>${indice.map(([id, n]) => `<li><a href="#${id}">${n}</a></li>`).join('')}</ol></nav>
@@ -355,6 +356,7 @@ window.WD = window.WD || {};
     const d = win.document, root = d.documentElement;
     if (modo === 'pb') root.dataset.impressao = 'pb'; else delete root.dataset.impressao;
     d.querySelectorAll('.conds details').forEach(x => { x.open = true; });
+    d.querySelectorAll('img[loading="lazy"]').forEach(i => { i.loading = 'eager'; });
     ajustarPagina(win);
     const fim = () => { delete root.dataset.impressao; ajustarPagina(win); win.removeEventListener('afterprint', fim); };
     win.addEventListener('afterprint', fim);
@@ -389,7 +391,7 @@ window.WD = window.WD || {};
       estado.pagamento = c.forma;
       $$('.opcao[data-pag]').forEach(el => { const on = el.dataset.pag === c.forma; el.classList.toggle('on', on); el.querySelector('input').checked = on; });
       $$('.extra').forEach(el => { const on = !!estado.opcionais[el.dataset.extra]; el.classList.toggle('on', on); el.querySelector('input').checked = on; });
-      const vp = $('[data-v="parcelado"]'); if (vp) vp.textContent = c.entrada > 0 ? `R$ ${brl(c.entrada)} + ${c.nParc}x ${brl(c.parcela)}` : `${c.nParc}x R$ ${brl(c.parcela)}`;
+      const vp = $('[data-v="parcelado"]'); if (vp) vp.textContent = c.entrada > 0 ? `R$ ${brl(c.entrada)} + ${c.nParc}x R$ ${brl(c.parcela)}` : `${c.nParc}x R$ ${brl(c.parcela)}`;
       const vc = $('[data-v="cartao"]'); if (vc) vc.textContent = `${c.nCartao}x R$ ${brl(c.cartao)}`;
       const va = $('[data-v="avista"]'); if (va) va.textContent = `R$ ${brl(c.avista)}`;
       $('[data-total-n]').textContent = brl(c.final);

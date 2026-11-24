@@ -423,3 +423,7 @@ dialog::backdrop{background:rgba(0,0,0,.6)}
   .editor{padding-left:0}
 }
 @media (max-width:400px){ .barra-topo{gap:6px} .nav a{padding:8px} .barra-topo .tema-mini{width:36px;height:36px} }
+
+/* Polimento */
+::selection{background:var(--verde);color:var(--sobre-verde)}
+html{accent-color:var(--verde);caret-color:var(--verde)}
