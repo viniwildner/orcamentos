@@ -395,3 +395,31 @@ dialog::backdrop{background:rgba(0,0,0,.6)}
   .linha-o .acts{grid-column:1 / -1;grid-row:3;justify-content:flex-start;margin-left:40px}
   .linha-o .acts .icone-btn{opacity:1}
 }
+
+
+/* ---------- Ajustes da avaliação de design ---------- */
+.toast.com-acao{pointer-events:auto;display:flex;align-items:center;gap:14px}
+.toast button{border:0;background:transparent;color:var(--verde);font:700 14px/1 var(--sans);cursor:pointer;padding:6px 4px;text-decoration:underline;text-underline-offset:3px}
+:root[data-tema="claro"] .toast button{color:#0ffaa4}
+.menu-mais{min-width:240px}
+.menu-mais .perigo{color:var(--coral-texto)}
+.acts-sep{width:1px;height:20px;background:var(--borda-sutil);margin:0 4px;align-self:center}
+.nav a{display:inline-flex;align-items:center;gap:8px}
+.nav-ic{display:none;width:18px;height:18px}
+.barra-topo .tema-mini{color:var(--texto-2)}
+.boas-vindas ol{list-style:none;margin:18px 0 0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;counter-reset:p}
+.boas-vindas li{counter-increment:p;padding:16px 18px;border-radius:var(--raio);background:var(--superficie-2)}
+.boas-vindas li::before{content:counter(p);display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--verde);color:var(--sobre-verde);font:700 13px/1 var(--sans);margin-bottom:10px}
+.boas-vindas b{display:block;font-weight:600;color:var(--texto)}
+.boas-vindas span{display:block;font-size:13.5px;color:var(--texto-2);margin-top:4px}
+@media (max-width:860px){ .boas-vindas ol{grid-template-columns:1fr} }
+@media (max-width:640px){
+  .barra-topo{gap:10px}
+  .nav{margin-left:0;gap:2px}
+  .nav a{padding:8px 10px}
+  .nav a[data-nav=config] span{display:none}
+  .nav a[data-nav=config] .nav-ic{display:block}
+  .modo{font-size:0;gap:0}
+  .editor{padding-left:0}
+}
+@media (max-width:400px){ .barra-topo{gap:6px} .nav a{padding:8px} .barra-topo .tema-mini{width:36px;height:36px} }

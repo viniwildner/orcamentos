@@ -401,3 +401,35 @@ main{min-width:0;max-width:1040px;padding-bottom:96px}
 :root[data-impressao="pb"] .titulo em,:root[data-impressao="pb"] .capa h1 em{text-decoration:underline;text-decoration-thickness:3px;text-underline-offset:6px}
 :root[data-impressao="pb"] .logo--branco{display:none}
 :root[data-impressao="pb"] .logo--escuro{display:inline-block}
+
+
+/* ---------- Ajustes de celular (avaliação de design) ---------- */
+body{overflow-x:clip}
+.barra-ap{display:none}
+.mensal b{white-space:nowrap}
+.aceite::before{width:300px;right:-170px;top:-230px}
+@media screen and (max-width:860px){
+  .aceite::before{width:220px;right:-120px;top:-150px;opacity:.9}
+  .barra-ap{display:flex;align-items:center;gap:12px;position:fixed;left:0;right:0;bottom:0;z-index:30;padding:10px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));background:var(--topo-bg);backdrop-filter:blur(8px);border-top:1px solid var(--borda-sutil);transform:translateY(110%);transition:transform .25s ease}
+  .barra-ap.on{transform:none}
+  .barra-ap>div{min-width:0;flex:1}
+  .barra-ap small{display:block;font-size:12px;color:var(--texto-suave);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .barra-ap b{display:block;font:700 17px/1.25 var(--sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .barra-ap .btn{flex:none;height:44px;padding:0 16px}
+  main{padding-bottom:72px}
+}
+@media screen and (max-width:560px){
+  .topo__in{gap:10px}
+  .topo .btn-pdf{display:none}
+  .topo .btn{font-size:14px}
+  .topo .tema-mini{margin-left:auto}
+  .topo .tema-mini+.btn{margin-left:0}
+  .topo__logo .logo{height:19px}
+  .topo .btn{padding:0 14px}
+  .opcao{grid-template-columns:22px minmax(0,1fr);row-gap:8px;align-items:start}
+  .opcao .marca{margin-top:1px}
+  .opcao .v{grid-column:2;text-align:left;white-space:normal}
+  .opcao .v small{display:inline;margin-left:4px}
+  .aceite .titulo{max-width:70%}
+}
+@media screen and (max-width:420px){ .so-largo{display:none} }

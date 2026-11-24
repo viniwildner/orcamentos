@@ -305,7 +305,7 @@ window.WD = window.WD || {};
           <p class="rotulo">Próximos passos</p>
           <h2 class="titulo">${aprovado ? 'Proposta aprovada' : 'Vamos começar?'}</h2>
           <ol class="passos">
-            <li><span><b>Aprove a proposta</b>Pelo botão ao lado ou respondendo no WhatsApp.</span></li>
+            <li><span><b>Aprove a proposta</b>Pelo botão de aprovar ou respondendo no WhatsApp.</span></li>
             <li><span><b>Assinatura e entrada</b>Enviamos o contrato digital e o Pix da entrada.</span></li>
             <li><span><b>Reunião de imersão</b>Em até 3 dias úteis marcamos a primeira conversa.</span></li>
           </ol>
@@ -319,6 +319,7 @@ window.WD = window.WD || {};
           <div class="ctas so-tela">
             <a class="btn btn--p" id="aprovar" href="https://wa.me/${esc(E.whatsapp)}" target="_blank" rel="noopener">${aprovado ? 'Falar no WhatsApp' : 'Aprovar pelo WhatsApp'}</a>
             <a class="btn btn--s" href="https://wa.me/${esc(E.whatsapp)}" target="_blank" rel="noopener">Tirar uma dúvida</a>
+            ${opts.acoes ? `<button class="btn btn--s" type="button" data-pdf>Baixar PDF</button>` : ''}
           </div>
           <div class="linhas-a"><div>${esc(E.responsavel)}<br>${esc(E.nome)}</div><div>${esc(o.cliente.contato || '')}<br>${esc(o.cliente.empresa || '')}</div></div>
         </div>
@@ -332,12 +333,13 @@ window.WD = window.WD || {};
   <div class="topo__meta">Proposta <b class="num">${esc(num)}</b></div>
   ${opts.acoes || ''}
   ${opts.semTema ? '' : WD.botaoTema('btn-icone so-tela')}
-  <a class="btn btn--p so-tela" href="#aceite">Aprovar proposta</a>
+  <a class="btn btn--p so-tela" href="#aceite">Aprovar<span class="so-largo"> proposta</span></a>
 </div></header>
 <div class="casca">
   <nav class="indice" aria-label="Seções da proposta"><ol>${indice.map(([id, n]) => `<li><a href="#${id}">${n}</a></li>`).join('')}</ol></nav>
   <main>${secoes.join('\n')}</main>
-</div>`;
+</div>
+<div class="barra-ap so-tela" aria-hidden="true"><div><small data-barra-forma></small><b class="num" data-barra-total></b></div><a class="btn btn--p" href="#aceite" tabindex="-1">${aprovado ? 'Ver próximos passos' : 'Aprovar proposta'}</a></div>`;
   };
 
   /* ---------- PDF: colorido (como na tela) ou preto e branco (fundo branco) ---------- */
@@ -400,6 +402,8 @@ window.WD = window.WD || {};
       h += `<div class="linha linha--total"><span>${rot}</span><b>R$ ${brl(val)}</b></div>`;
       $('[data-linhas]').innerHTML = h;
       const m = $('[data-mensal]'); if (m) m.textContent = c.mensal ? `R$ ${brl(c.mensal)}/mês` : 'Nenhuma';
+      const bt = $('[data-barra-total]'); if (bt) bt.textContent = `R$ ${brl(c.final)}`;
+      const bf = $('[data-barra-forma]'); if (bf) bf.textContent = WD.textoForma(c) + (c.mensal ? ` · + R$ ${brl(c.mensal, false)}/mês` : '');
 
       const extras = (o.opcionais || []).filter((_, i) => estado.opcionais[i]).map(x => x.nome).join(', ');
       const msg = `Olá! Aprovo a proposta ${o.numero || ''} (${o.cliente.empresa || 'website'}). Forma de pagamento: ${WD.textoForma(c)}. Total: R$ ${brl(c.final)}.` + (extras ? ` Opcionais: ${extras}.` : '') + (c.mensal ? ` Mensalidade: R$ ${brl(c.mensal)}.` : '');
@@ -416,6 +420,17 @@ window.WD = window.WD || {};
     if (ap && aoEscolher) ap.addEventListener('click', () => { const c = WD.calcular(o, estado); aoEscolher({ pagamento: c.forma, opcionais: estado.opcionais.slice(), aprovadoEm: new Date().toISOString() }); });
     atualizar(false);
 
+    /* Barra fixa no celular: aparece depois da capa e some ao chegar nos próximos passos */
+    const barra = $('.barra-ap'), capa = $('#capa'), fim = $('#aceite');
+    if (barra && capa && fim && 'IntersectionObserver' in window) {
+      const vis = { capa: true, fim: false };
+      const io2 = new IntersectionObserver(es => {
+        es.forEach(e => { vis[e.target === capa ? 'capa' : 'fim'] = e.isIntersecting; });
+        const on = !vis.capa && !vis.fim; barra.classList.toggle('on', on); barra.setAttribute('aria-hidden', String(!on));
+        const a = barra.querySelector('a'); if (a) a.tabIndex = on ? 0 : -1;
+      });
+      io2.observe(capa); io2.observe(fim);
+    }
     const links = $$('.indice a');
     if ('IntersectionObserver' in window) {
       const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) links.forEach(a => a.classList.toggle('ativo', a.getAttribute('href') === '#' + e.target.id)); }), { rootMargin: '-40% 0px -55% 0px' });

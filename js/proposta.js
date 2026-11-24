@@ -18,7 +18,7 @@
   const acoes = `<button class="btn btn-pdf so-tela" type="button" id="pdf" title="Salvar em PDF"><svg class="i" style="width:18px;height:18px"><use href="#i-download"/></svg><span>Baixar PDF</span></button>`;
   app.innerHTML = WD.renderProposta(o, cfg, { acoes });
   const bPdf = document.getElementById('pdf');
-  bPdf.addEventListener('click', () => WD.menuPDF(bPdf, modo => WD.imprimir(window, modo)));
+  [bPdf, ...document.querySelectorAll('[data-pdf]')].forEach(b => b.addEventListener('click', () => WD.menuPDF(b, modo => WD.imprimir(window, modo))));
 
   WD.ligarProposta(app, o, cfg, escolha => { WD.store.registrarEscolha(id, escolha).catch(e => console.warn(e)); });
   WD.store.marcarVisto(id).catch(() => {});

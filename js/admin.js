@@ -18,7 +18,18 @@
   let atual = null;          // orçamento aberto no editor
   let timerSalvar = null, timerPrev = null, sujo = false;
 
-  function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('on'); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('on'), 2200); }
+  function toast(t, acao, fn, ms) {
+    const el = $('#toast'); el.textContent = t; el.classList.toggle('com-acao', !!acao);
+    if (acao) { const b = document.createElement('button'); b.type = 'button'; b.textContent = acao; b.onclick = () => { el.classList.remove('on'); clearTimeout(el._t); fn(); }; el.appendChild(b); }
+    el.classList.add('on'); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('on'), ms || 2200);
+  }
+  /* (51) 99999-9999 enquanto digita; aceita +55 colado */
+  function fone(v) {
+    let d = String(v || '').replace(/\D/g, ''); if (d.length > 11 && d.startsWith('55')) d = d.slice(2); d = d.slice(0, 11);
+    if (!d) return ''; if (d.length <= 2) return '(' + d;
+    const meio = d.length > 10 ? 7 : 6;
+    return `(${d.slice(0, 2)}) ${d.slice(2, meio)}${d.length > meio ? '-' + d.slice(meio) : ''}`;
+  }
   function erro(e) { console.error(e); toast('Algo deu errado: ' + (e.message || e)); }
 
   /* ---------- Caminhos (ex.: "cliente.empresa", "etapas.2.nome") ---------- */
@@ -34,7 +45,7 @@
     const larg = f.w ? ' ' + f.w : '';
     const dica = f.dica ? `<span class="dica">${f.dica}</span>` : '';
     const id = 'c_' + p.replace(/\./g, '_');
-    const at = `id="${id}" data-path="${p}" data-tipo="${f.tipo}"`;
+    const at = `id="${id}" data-path="${p}" data-tipo="${f.tipo}"${f.mascara ? ` data-mascara="${f.mascara}"` : ''}`;
     switch (f.tipo) {
       case 'textarea': return `<div class="campo${larg}"><label for="${id}">${f.label}</label><textarea ${at} rows="${f.rows || 3}">${esc(v)}</textarea>${dica}</div>`;
       case 'linhas': return `<div class="campo${larg}"><label for="${id}">${f.label}</label><textarea ${at} rows="${f.rows || 4}">${esc((v || []).join('\n'))}</textarea><span class="dica">${f.dica || 'Um item por linha.'}</span></div>`;
@@ -99,6 +110,7 @@
     root.addEventListener('input', e => {
       const el = e.target; const p = el.dataset.path; if (!p) return;
       const t = el.dataset.tipo; let v = el.value;
+      if (el.dataset.mascara === 'fone') { const f = fone(v); if (f !== v) { const fimC = el.selectionStart === v.length; el.value = v = f; if (fimC) el.setSelectionRange(f.length, f.length); } }
       if (t === 'check') v = el.checked;
       else if (t === 'numero' || t === 'dinheiro') v = v === '' ? '' : Number(v);
       else if (t === 'linhas') v = v.split('\n').map(s => s.trim()).filter(Boolean);
@@ -169,7 +181,7 @@
         F('cliente.empresa', 'Empresa', 'text', { ph: 'Pousada Maré Alta' }),
         F('cliente.contato', 'Nome do contato', 'text', { w: 'm3' }),
         F('cliente.cidade', 'Cidade', 'text', { w: 'm3' }),
-        F('cliente.whatsapp', 'WhatsApp', 'text', { w: 'm3', input: 'tel', ph: '(48) 99999-9999' }),
+        F('cliente.whatsapp', 'WhatsApp', 'text', { w: 'm3', input: 'tel', ph: '(51) 99999-9999', mascara: 'fone' }),
         F('cliente.email', 'E-mail', 'text', { w: 'm3', input: 'email' }),
         F('numero', 'Número', 'fixo', { w: 'm2', dica: 'Automático' }),
         F('data', 'Data', 'data', { w: 'm2' }),
@@ -339,11 +351,13 @@
     const conta = s => s === 'todos' ? lista.length : lista.filter(x => x.status === s).length;
     const comAprov = soma(aprov, 'comissao'), comAbertos = soma(abertos, 'comissao');
     const entregas = aprov.filter(x => x.entrega).sort((a, b) => a.entrega.localeCompare(b.entrega));
+    const semDados = lista.every(x => x.status === 'rascunho');
     tela.innerHTML = `<div class="pagina">
       <div class="cab-pag"><div><p class="sobretitulo">${saudacao()}, ${esc((cfg.empresa.responsavel || '').split(' ')[0] || 'Marcus')}</p><h1>Orçamentos</h1></div>
         <div class="acoes"><button class="btn btn--p" id="novo">${ic('plus')}Novo orçamento</button></div></div>
       ${WD.store.modo === 'local' ? `<p class="aviso-local"><span class="ponto"></span><span><b>Modo local.</b> Os dados ficam só neste navegador e o link do cliente não abre em outro aparelho. Conecte o Supabase para enviar links.</span></p>` : ''}
-      <section class="painel-num" aria-label="Resumo">
+      ${semDados ? `<section class="painel-num boas-vindas" aria-label="Como funciona"><h2 class="pn-t">Seu painel começa aqui</h2>
+        <ol><li><b>Crie um orçamento.</b><span>Ele já vem preenchido com os seus padrões.</span></li><li><b>Envie pelo WhatsApp ou e-mail.</b><span>O link e a mensagem ficam prontos.</span></li><li><b>Acompanhe por aqui.</b><span>Valores, comissões, aprovações e prazos aparecem assim que a primeira proposta for enviada.</span></li></ol></section>` : `<section class="painel-num" aria-label="Resumo">
         <div class="nums">
           <div class="met"><span>Em negociação</span><b class="num">R$ ${brl(soma(abertos), false)}</b><small>${abertos.length} ${abertos.length === 1 ? 'proposta enviada' : 'propostas enviadas'}</small></div>
           <div class="met met--verde"><span>Aprovado</span><b class="num">R$ ${brl(soma(aprov), false)}</b><small>R$ ${brl(soma(aprov, 'liquido'), false)} líquido, sem comissões</small></div>
@@ -358,7 +372,7 @@
         <section class="painel-num entregas" aria-label="Próximas entregas"><h2 class="pn-t">Próximas entregas</h2>
           ${entregas.length ? `<ul>${entregas.slice(0, 5).map(x => { const n = WD.diasAte(x.entrega); return `<li><a href="#/o/${x.id}"><b>${esc(x.cliente || 'Sem nome')}</b><span>Começou em ${fmtData(x.inicio)}</span></a><span class="ent${n < 0 ? ' atraso' : n <= 7 ? ' perto' : ''}"><b class="num">${fmtData(x.entrega)}</b><small>${faltam(x.entrega)}</small></span></li>`; }).join('')}</ul>` : '<p class="pn-vazio">Quando um cliente aprovar, o prazo de entrega aparece aqui.</p>'}
         </section>
-      </div>
+      </div>`}
       <div class="filtros">${['todos', ...Object.keys(STATUS)].map(s => `<button class="chip${filtro === s ? ' on' : ''}" data-filtro="${s}">${s === 'todos' ? 'Todos' : STATUS[s]}<span class="num">${conta(s)}</span></button>`).join('')}
         <input class="busca" type="search" placeholder="Buscar cliente ou número" value="${esc(busca)}" id="busca"></div>
       <div class="lista" id="lista"></div>
@@ -383,18 +397,17 @@
         <span class="col-valor num">R$ ${brl(x.valor, false)}${x.comissao ? `<small title="Comissão${x.comissaoPara ? ' para ' + esc(x.comissaoPara) : ''}">com. R$ ${brl(x.comissao, false)}</small>` : ''}</span>
         <span class="col-data">${x.entrega ? (() => { const n = WD.diasAte(x.entrega); return `<b class="num${n < 0 ? ' atraso' : n <= 7 ? ' perto' : ''}">${fmtData(x.entrega)}</b><small>${faltam(x.entrega)}</small>`; })() : `<small>${x.status === 'aprovado' ? '—' : 'após aprovar'}</small>`}</span>
         <span class="acts">
-          <button class="icone-btn" title="Enviar no WhatsApp" aria-label="Enviar no WhatsApp" data-acao-l="whats" data-id-l="${x.id}">${ic('whats')}</button>
+          <button class="icone-btn" title="Enviar no WhatsApp" aria-label="Enviar no WhatsApp" data-acao-l="whats" data-id-l="${x.id}">${ic('whatsapp')}</button>
           <button class="icone-btn" title="Enviar por e-mail" aria-label="Enviar por e-mail" data-acao-l="email" data-id-l="${x.id}">${ic('mail')}</button>
           <button class="icone-btn" title="Baixar PDF" aria-label="Baixar PDF" data-acao-l="pdf" data-id-l="${x.id}">${ic('download')}</button>
-          <button class="icone-btn" title="Duplicar" aria-label="Duplicar" data-dup="${x.id}">${ic('copy')}</button>
-          <button class="icone-btn perigo" title="Excluir" aria-label="Excluir" data-del="${x.id}">${ic('trash')}</button></span></div>`).join('');
+          <span class="acts-sep" aria-hidden="true"></span>
+          <button class="icone-btn" title="Mais ações" aria-label="Mais ações" aria-haspopup="menu" data-mais="${x.id}">${ic('more')}</button></span></div>`).join('');
     $$('[data-acao-l]', el).forEach(b => b.onclick = () => acaoLista(b.dataset.idL, b.dataset.acaoL, b));
     $$('.linha-o[data-id]', el).forEach(r => {
       r.onclick = e => { if (e.target.closest('button')) return; location.hash = '#/o/' + r.dataset.id; };
       r.onkeydown = e => { if (e.key === 'Enter') location.hash = '#/o/' + r.dataset.id; };
     });
-    $$('[data-dup]', el).forEach(b => b.onclick = () => duplicar(b.dataset.dup));
-    $$('[data-del]', el).forEach(b => b.onclick = () => excluir(b.dataset.del));
+    $$('[data-mais]', el).forEach(b => b.onclick = () => menuMais(b, b.dataset.mais));
   }
 
   function escolherTipo() {
@@ -423,11 +436,33 @@
       const s = await WD.store.salvar(o); toast('Orçamento duplicado'); location.hash = '#/o/' + s.id;
     } catch (e) { erro(e); }
   }
-  async function excluir(id) {
-    const x = lista.find(l => l.id === id);
-    if (!confirm(`Excluir o orçamento ${x ? x.numero + ' de ' + (x.cliente || 'sem nome') : ''}? Essa ação não pode ser desfeita.`)) return;
-    try { await WD.store.excluir(id); toast('Orçamento excluído'); telaLista(); } catch (e) { erro(e); }
+  /* Menu ⋯ da lista: Duplicar e Excluir ficam longe dos botões de uso diário */
+  function menuMais(botao, id) {
+    document.querySelectorAll('.menu-pdf').forEach(m => m.remove());
+    const m = document.createElement('div'); m.className = 'menu-pdf menu-mais'; m.setAttribute('role', 'menu');
+    m.innerHTML = `<button type="button" role="menuitem" data-m="dup">${ic('copy')}<span>Duplicar<small>Cria um rascunho com o mesmo conteúdo</small></span></button>` +
+      `<button type="button" role="menuitem" data-m="del" class="perigo">${ic('trash')}<span>Excluir<small>Dá para desfazer por alguns segundos</small></span></button>`;
+    document.body.appendChild(m);
+    const r = botao.getBoundingClientRect(); const acima = r.bottom + m.offsetHeight + 12 > innerHeight;
+    m.style.top = (acima ? r.top - m.offsetHeight - 6 : r.bottom + 6) + 'px';
+    m.style.left = Math.max(8, Math.min(r.right - m.offsetWidth, innerWidth - m.offsetWidth - 8)) + 'px';
+    const fechar = () => { m.remove(); document.removeEventListener('pointerdown', fora, true); document.removeEventListener('keydown', tecla, true); };
+    const fora = e => { if (!m.contains(e.target) && !botao.contains(e.target)) fechar(); };
+    const tecla = e => { if (e.key === 'Escape') { e.preventDefault(); fechar(); botao.focus(); } };
+    setTimeout(() => { document.addEventListener('pointerdown', fora, true); document.addEventListener('keydown', tecla, true); });
+    m.addEventListener('click', e => { const b = e.target.closest('[data-m]'); if (!b) return; fechar(); b.dataset.m === 'dup' ? duplicar(id) : excluir(id); });
+    m.querySelector('button').focus();
   }
+  /* Excluir com "Desfazer": some da lista na hora e só apaga de vez depois de 8 segundos */
+  const pendentes = new Map();
+  function excluir(id) {
+    const x = lista.find(l => l.id === id); if (!x) return;
+    lista = lista.filter(l => l.id !== id); desenharLista();
+    const apagar = async () => { pendentes.delete(id); try { await WD.store.excluir(id); } catch (e) { erro(e); lista.push(x); desenharLista(); } };
+    const t = setTimeout(apagar, 8000); pendentes.set(id, apagar);
+    toast(`Orçamento ${x.numero || ''} excluído`, 'Desfazer', () => { clearTimeout(t); pendentes.delete(id); lista.push(x); lista.sort((a, b) => String(b.atualizado_em).localeCompare(String(a.atualizado_em))); desenharLista(); toast('Orçamento restaurado'); }, 8000);
+  }
+  window.addEventListener('pagehide', () => pendentes.forEach(f => f()));
 
   /* ---------- Editor ---------- */
   let abertasEd = new Set(['cliente']);
@@ -588,7 +623,7 @@
       $('#env-whats').hidden = canal !== 'whats'; $('#env-email').hidden = canal !== 'email';
       $('#env-ir').innerHTML = `${ic('send')}${canal === 'whats' ? 'Abrir WhatsApp' : 'Abrir e-mail'}`;
     });
-    $('#env-copiar').onclick = async () => { try { await navigator.clipboard.writeText(linkCliente()); } catch (e) { $('#env-link').select(); document.execCommand('copy'); } toast('Link copiado'); marcarEnviado(); };
+    $('#env-copiar').onclick = async () => { try { await navigator.clipboard.writeText(linkCliente()); } catch (e) { $('#env-link').select(); document.execCommand('copy'); } const mudouSt = await marcarEnviado(); toast(mudouSt ? 'Link copiado · proposta marcada como Enviada' : 'Link copiado'); };
     $('#env-pdf').onclick = e => $('#editor') ? menuPDF(e) : WD.menuPDF(e.currentTarget, m => pdfDe(atual, m));
     $('#env-ir').onclick = () => {
       if (canal === 'whats') { const n = foneCliente(); window.open(`https://wa.me/${n}?text=${encodeURIComponent($('#env-msg').value)}`, '_blank', 'noopener'); }
@@ -597,7 +632,8 @@
     };
   }
   async function marcarEnviado() {
-    if (atual.status === 'rascunho') { atual.status = 'enviado'; atual.enviadoEm = new Date().toISOString(); WD.registrar(atual, 'enviado', 'voce'); const s = $('#ed-status'); if (s) { s.value = 'enviado'; s.dataset.s = 'enviado'; } sujo = true; await salvarAgora(); if (!$('#editor')) telaLista(); }
+    if (atual.status !== 'rascunho') return false;
+    { atual.status = 'enviado'; atual.enviadoEm = new Date().toISOString(); WD.registrar(atual, 'enviado', 'voce'); const s = $('#ed-status'); if (s) { s.value = 'enviado'; s.dataset.s = 'enviado'; } sujo = true; await salvarAgora(); if (!$('#editor')) telaLista(); return true; }
   }
 
   /* PDF: imprime a pré-visualização (Salvar como PDF, A4) */

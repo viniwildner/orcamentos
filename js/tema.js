@@ -16,7 +16,11 @@ WD.definirTema = function (novo) {
 WD.alternarTema = function () { WD.definirTema(WD.tema() === 'claro' ? 'escuro' : 'claro'); };
 
 /* O botão agora é o seletor flutuante na lateral esquerda (abaixo); no topo não aparece mais. */
-WD.botaoTema = function () { return ''; };
+WD.botaoTema = function () {
+  return '<button type="button" class="tema-mini" data-alternar-tema title="Alternar modo claro/escuro" aria-label="Alternar modo claro/escuro">' +
+    '<svg class="t-lua" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>' +
+    '<svg class="t-sol" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg></button>';
+};
 
 /* Seletor flutuante Escuro / Claro, na lateral esquerda, como no site da Wildner */
 (function () {
@@ -34,8 +38,11 @@ WD.botaoTema = function () { return ''; };
     ':root[data-tema="claro"] .tema-sw button{color:#4d4c4e}' +
     ':root[data-tema="claro"] .tema-sw button:hover{color:#111013}' +
     ':root[data-tema="claro"] .tema-sw button[aria-pressed="true"]{background:#111013;color:#fff}' +
-    '@media (max-width:860px){.tema-sw{left:0;top:auto;bottom:24px;transform:none;border-left:0;border-radius:0 14px 14px 0;padding:3px}.tema-sw button{padding:9px 6px;gap:6px;font-size:11px;border-radius:11px}.tema-sw svg{width:14px;height:14px}}' +
-    '@media print{.tema-sw{display:none!important}}';
+    '.tema-mini{display:none;width:40px;height:40px;flex:none;place-items:center;border-radius:999px;border:1px solid rgba(127,127,127,.3);background:transparent;color:inherit;cursor:pointer;padding:0}' +
+    '.tema-mini svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}' +
+    ':root[data-tema="claro"] .tema-mini .t-sol,:root[data-tema="escuro"] .tema-mini .t-lua{display:none}' +
+    '@media (max-width:860px){.tema-sw{display:none!important}.tema-mini{display:inline-grid}}' +
+    '@media print{.tema-sw,.tema-mini{display:none!important}}';
   function montar() {
     if (document.querySelector('.tema-sw')) return;
     var st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
