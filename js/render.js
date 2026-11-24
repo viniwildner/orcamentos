@@ -206,8 +206,8 @@ window.WD = window.WD || {};
       <div class="resumo">
         <div class="kpi">${ic('wallet')}<div class="kpi__v verde num" data-total>R$ ${brl(c.final, false)}</div><div class="kpi__l">Investimento no projeto<br><span data-forma>${esc(WD.textoForma(c))}</span></div></div>
         <div class="kpi">${ic('calendar')}<div class="kpi__v num">${semanas} semana${semanas > 1 ? 's' : ''}</div><div class="kpi__l">${T.kpiPrazo}</div></div>
-        ${ident ? `<div class="kpi">${ic('sparkles')}<div class="kpi__v num">${esc(o.conceitos || 2)} conceito${Number(o.conceitos) === 1 ? '' : 's'}</div><div class="kpi__l">Caminhos de marca para você escolher</div></div>
-        <div class="kpi">${ic('pen')}<div class="kpi__v num">${esc(o.rodadas || 2)} rodada${Number(o.rodadas) === 1 ? '' : 's'}</div><div class="kpi__l">De ajustes no conceito escolhido</div></div>` : `<div class="kpi">${ic('layout')}<div class="kpi__v num">${paginas} página${paginas > 1 ? 's' : ''}</div><div class="kpi__l">Com painel para editar o conteúdo</div></div>
+        ${ident ? `<div class="kpi">${ic('sparkles')}<div class="kpi__v num">${(o.entregaveis || []).length} entregáveis</div><div class="kpi__l">Do logotipo ao manual da marca</div></div>
+        <div class="kpi">${ic('pen')}<div class="kpi__v num">${esc(o.rodadas || 2)} rodada${Number(o.rodadas) === 1 ? '' : 's'}</div><div class="kpi__l">De ajustes inclusos na sua nova marca</div></div>` : `<div class="kpi">${ic('layout')}<div class="kpi__v num">${paginas} página${paginas > 1 ? 's' : ''}</div><div class="kpi__l">Com painel para editar o conteúdo</div></div>
         <div class="kpi">${ic('life')}<div class="kpi__v num">${esc(o.suporteDias)} dias</div><div class="kpi__l">De suporte e ajustes depois da publicação</div></div>`}
       </div>
     </section>`);
@@ -288,7 +288,7 @@ window.WD = window.WD || {};
         </div>
         ${(o.opcionais || []).length ? `<div class="extras">
           <h3>Serviços opcionais</h3><p class="ajuda so-tela"><b>Você escolhe:</b> toque para marcar os serviços que quer incluir ou desmarcar os que não quer. O total se atualiza na hora.</p><p class="ajuda so-print">Serviços que podem ser incluídos no projeto. Os marcados já estão somados no total.</p>
-          ${o.opcionais.map((op, i) => `<label class="opcao extra${c.marcados[i] ? ' on' : ''}" data-extra="${i}"><input type="checkbox"${c.marcados[i] ? ' checked' : ''}><span class="marca"></span><span><b>${esc(op.nome)}</b><span class="d">${esc(op.desc)}</span><span class="estado so-tela"><span class="e-add">+ Adicionar</span><span class="e-ok">Incluído · toque para remover</span></span></span><span class="v num">R$ ${brl(op.valor, false)}${op.tipo === 'mensal' ? '<small>por mês</small>' : ''}</span></label>`).join('')}
+          ${o.opcionais.map((op, i) => `<label class="opcao extra${c.marcados[i] ? ' on' : ''}" data-extra="${i}"><input type="checkbox"${c.marcados[i] ? ' checked' : ''}><span class="marca"></span><span><b>${esc(op.nome)}${op.selo ? ` <span class="selo selo--alta">${esc(op.selo)}</span>` : ''}</b><span class="d">${esc(op.desc)}</span><span class="estado so-tela"><span class="e-add">+ Adicionar</span><span class="e-ok">Incluído · toque para remover</span></span></span><span class="v num">R$ ${brl(op.valor, false)}${op.tipo === 'mensal' ? '<small>por mês</small>' : ''}</span></label>`).join('')}
           ${o.opcionais.some(op => op.tipo === 'mensal') ? `<div class="mensal"><span>${T.mensal}</span><b data-mensal></b></div>` : ''}
         </div>` : ''}
       </div>

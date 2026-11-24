@@ -89,7 +89,13 @@ window.WD = window.WD || {};
       cfg.empresa.marcas = clone(padraoM).concat(nomes.filter(n => !padraoM.some(m => m.nome === n)).map(nome => ({ nome, logo: '' })));
     }
     cfg.modelos = Object.assign({}, salvo.modelos || {});
-    Object.keys(WD.CONFIG_PADRAO.modelos).forEach(t => { cfg.modelos[t] = Object.assign(clone(WD.CONFIG_PADRAO.modelos[t]), (salvo.modelos || {})[t] || {}); });
+    Object.keys(WD.CONFIG_PADRAO.modelos).forEach(t => { const sv = (salvo.modelos || {})[t]; const pd = WD.CONFIG_PADRAO.modelos[t]; cfg.modelos[t] = Object.assign(clone(pd), sv && sv.versao === pd.versao ? sv : {}); });
+    // Portfólio v2: cases de identidade visual; Thomas fica só em website
+    if ((salvo.portfolioVersao || 1) < WD.CONFIG_PADRAO.portfolioVersao) {
+      cfg.portfolio = (cfg.portfolio || []).map(p => p.id === 'thomas' ? Object.assign({}, p, { tipos: ['website'] }) : p);
+      WD.CONFIG_PADRAO.portfolio.filter(d => !cfg.portfolio.some(p => p.id === d.id)).forEach(d => cfg.portfolio.push(clone(d)));
+      cfg.portfolioVersao = WD.CONFIG_PADRAO.portfolioVersao;
+    }
     (cfg.portfolio || []).forEach(p => { if (!p.tipos) { const d = WD.CONFIG_PADRAO.portfolio.find(x => x.id === p.id); p.tipos = d ? d.tipos.slice() : ['website']; } });
     (cfg.depoimentos || []).forEach(d => { const p = WD.CONFIG_PADRAO.depoimentos.find(x => x.id === d.id); if (p && d.foto === undefined) d.foto = p.foto; });
     return cfg;

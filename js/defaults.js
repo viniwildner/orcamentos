@@ -33,7 +33,7 @@ WD.TEXTOS_TIPO = {
     rotulo: 'Proposta de identidade visual', objeto: 'nova marca', objetoCurto: 'marca',
     portTitulo: 'Algumas marcas que <em>já criamos</em>', portAlt: 'Marca',
     kpiPrazo: 'Do briefing à marca pronta',
-    prazoTitulo: 'Sua marca pronta em', marcoAprov: 'Você vê os conceitos na semana', marcoTeste: 'Manual da marca na semana', marcoTesteTxt: 'Revise as regras e os arquivos antes da entrega final.',
+    prazoTitulo: 'Sua marca pronta em', marcoAprov: 'Você vê a sua nova marca na semana', marcoTeste: 'Manual da marca na semana', marcoTesteTxt: 'Revise as regras e os arquivos antes da entrega final.',
     marcoFim: 'Arquivos entregues na semana', mensal: 'Mensalidade a partir da entrega', tipoFinal: 'Entrega final'
   }
 };
@@ -102,7 +102,13 @@ WD.CONFIG_PADRAO = {
   portfolio: [
     { id: 'cron', nome: 'CRON – Centro Regional de Oncologia', segmento: 'Saúde', imagem: 'img/cron-mockup.webp', link: 'https://wildnerdesign.com.br/projeto/cron/', tipos: ['website'], texto: 'Site responsivo que organiza informações médicas complexas em uma navegação simples, para pacientes e profissionais.' },
     { id: 'joner', nome: 'Imobiliária Joner', segmento: 'Imobiliária', imagem: 'img/joner-mockup.webp', link: 'https://wildnerdesign.com.br/projeto/imobiliaria-joner/', tipos: ['website'], texto: 'Plataforma com filtros de imóveis, blog e plantão de vendas para uma imobiliária com mais de 30 anos de mercado.' },
-    { id: 'thomas', nome: 'Thomas Representações', segmento: 'Construção civil', imagem: 'img/thomas-mockup.webp', link: 'https://wildnerdesign.com.br/projeto/thomas-representacoes/', tipos: ['website', 'identidade'], texto: 'Identidade visual e site para uma representante de pisos e porcelanatos, com foco em confiança e tradição.' }
+    { id: 'thomas', nome: 'Thomas Representações', segmento: 'Construção civil', imagem: 'img/thomas-mockup.webp', link: 'https://wildnerdesign.com.br/projeto/thomas-representacoes/', tipos: ['website'], texto: 'Identidade visual e site para uma representante de pisos e porcelanatos, com foco em confiança e tradição.' },
+    { id: 'vovo-garoto', nome: 'Vovô Garoto', segmento: 'Restaurante e pizzaria', imagem: 'img/marca-vovo-garoto.webp', link: 'https://wildnerdesign.com.br/projeto/vovo-garoto/', tipos: ['identidade'], texto: 'Marca com personagem para um restaurante e pizzaria familiar, aplicada na fachada, no cardápio, nas embalagens e no delivery.' },
+    { id: 'ledur', nome: 'Ledur Seguros', segmento: 'Seguros', imagem: 'img/marca-ledur.webp', link: 'https://wildnerdesign.com.br/projeto/ledur/', tipos: ['identidade'], texto: 'Identidade sofisticada para uma corretora de seguros de alto padrão, com foco em exclusividade e confiança.' },
+    { id: 'casa-do-moinho', nome: 'Casa do Moinho', segmento: 'Livraria e cafeteria', imagem: 'img/marca-casa-do-moinho.webp', link: 'https://wildnerdesign.com.br/projeto/casa-do-moinho/', tipos: ['identidade'], texto: 'Marca acolhedora para um espaço que une livraria, cafeteria e lazer em Arroio do Meio.' },
+    { id: 'leviva', nome: 'Leviva', segmento: 'Moda', imagem: 'img/marca-leviva.webp', link: 'https://wildnerdesign.com.br/projeto/leviva/', tipos: ['identidade'], texto: 'Marca de roupas básicas e confortáveis, com a leveza e o movimento como valores principais.' },
+    { id: 'fazenda-santa-rosa', nome: 'Fazenda Santa Rosa', segmento: 'Agronegócio', imagem: 'img/marca-fazenda-santa-rosa.webp', link: 'https://wildnerdesign.com.br/projeto/fazenda-santa-rosa/', tipos: ['identidade'], texto: 'Marca sólida e tradicional para uma produtora e exportadora de grãos no Maranhão.' },
+    { id: 'viabile', nome: 'Viabile Engenharia', segmento: 'Engenharia', imagem: 'img/marca-viabile-engenharia.webp', link: 'https://wildnerdesign.com.br/projeto/viabile-engenharia/', tipos: ['identidade'], texto: 'Identidade que equilibra inovação e solidez para uma empresa de projetos complementares e topografia.' }
   ],
   depoimentos: [
     { id: 'tomasi', foto: 'img/dep-carlos.webp', nome: 'Carlos Eduardo Tomasi', empresa: 'Thomas Representações', texto: 'A Wildner Design transformou nossa marca em algo que realmente conecta com nossos clientes. O trabalho foi ágil, criativo e superou todas as expectativas!' },
@@ -120,7 +126,7 @@ WD.CONFIG_PADRAO = {
     { icone: 'globe', titulo: 'Site em mais idiomas', texto: 'Versões traduzidas para atender visitantes de fora.' }
   ],
   opcionais: [
-    { nome: 'Textos das páginas', desc: 'Redação pensada para o Google, feita por nós', valor: 1200, tipo: 'unico' },
+    { nome: 'Textos das páginas', desc: 'Redação pensada para o Google, feita por nós', valor: 1200, tipo: 'unico', selo: 'Em alta' },
     { nome: 'Versão em inglês e espanhol', desc: 'Para turistas e clientes estrangeiros', valor: 1800, tipo: 'unico' },
     { nome: 'Tratamento de fotos', desc: 'Até 60 fotos ajustadas para o site', valor: 600, tipo: 'unico' },
     { nome: 'Hospedagem e segurança', desc: 'Servidor, SSL, backup diário e e-mails', valor: 69, tipo: 'mensal' },
@@ -152,21 +158,22 @@ WD.CONFIG_PADRAO = {
     emailAssunto: 'Proposta {numero} · Novo site da {empresa}',
     emailCorpo: 'Olá, {contato}!\n\nSegue a proposta do novo site da {empresa}. No link abaixo você vê o escopo, o prazo e o investimento, escolhe a forma de pagamento e pode aprovar online:\n\n{link}\n\nSe preferir, a proposta também pode ser salva em PDF pelo botão no topo da página.\n\nFico à disposição.\n\nMarcus Vinicius Wildner\nWildner Design · (51) 98019-9884'
   },
+  portfolioVersao: 2,
   modelos: {
     identidade: {
+      versao: 2,
       imagemCapa: 'img/capa-identidade.webp',
       valorBase: 4800,
       descricaoBase: 'Identidade visual completa',
-      conceitos: 2,
       rodadas: 2,
       diferenciais: [
-        { icone: 'pen', titulo: 'Marca exclusiva', texto: 'Nada de banco de imagens ou modelo pronto. Cada símbolo é desenhado do zero.' },
-        { icone: 'target', titulo: 'Estratégia antes do desenho', texto: 'Entendemos o seu público e os concorrentes antes de rabiscar a primeira ideia.' },
-        { icone: 'handshake', titulo: 'Atendimento direto', texto: 'Você fala com quem desenha a sua marca, sem intermediários.' },
+        { icone: 'pen', titulo: 'Marca exclusiva', texto: 'Nada de banco de imagens ou modelo pronto. Cada marca é criada do zero.' },
+        { icone: 'target', titulo: 'Estratégia antes da criação', texto: 'Entendemos o seu público e o seu mercado antes de começar a criar.' },
+        { icone: 'handshake', titulo: 'Atendimento direto', texto: 'Você fala com quem cria a sua marca, sem intermediários.' },
         { icone: 'layers', titulo: 'Pronta para tudo', texto: 'Funciona no site, nas redes, no impresso e na fachada, do tamanho de um ícone ao de um outdoor.' }
       ],
       entregaveis: [
-        { icone: 'pentool', titulo: 'Logotipo principal', texto: 'Desenhado do zero, nas versões horizontal e vertical.' },
+        { icone: 'pentool', titulo: 'Logotipo principal', texto: 'Criado do zero, nas versões horizontal e vertical.' },
         { icone: 'shapes', titulo: 'Variações e símbolo', texto: 'Versão reduzida e ícone para espaços pequenos, como o perfil nas redes.' },
         { icone: 'palette', titulo: 'Paleta de cores', texto: 'Cores principais e de apoio, com códigos para tela e impressão (HEX, RGB, CMYK e Pantone).' },
         { icone: 'type', titulo: 'Tipografia', texto: 'As fontes da marca e como usar em títulos e textos.' },
@@ -178,16 +185,17 @@ WD.CONFIG_PADRAO = {
       aplicacoes: ['Cartão de visita', 'Assinatura de e-mail', 'Avatar e capa para redes sociais', 'Papel timbrado'],
       formatos: ['AI', 'PDF', 'SVG', 'PNG', 'JPG'],
       opcionais: [
+        { nome: 'Motion de apresentação da marca', desc: 'Vídeo animado revelando a nova marca, para redes e site', valor: 1400, tipo: 'unico', selo: 'Em alta' },
         { nome: 'Kit para redes sociais', desc: 'Modelos editáveis de post e story no Canva', valor: 900, tipo: 'unico' },
+        { nome: 'Adesivagem de frota', desc: 'Layout dos veículos com simulação, pronto para produção', valor: 900, tipo: 'unico' },
+        { nome: 'Fachada e sinalização', desc: 'Projeto visual da fachada com simulação', valor: 1100, tipo: 'unico' },
         { nome: 'Papelaria completa', desc: 'Envelope, pasta, crachá e bloco de anotações', valor: 700, tipo: 'unico' },
-        { nome: 'Apresentação institucional', desc: 'Modelo de slides no padrão da marca', valor: 1200, tipo: 'unico' },
-        { nome: 'Registro da marca no INPI', desc: 'Acompanhamento do pedido; taxas do INPI à parte', valor: 1500, tipo: 'unico' },
-        { nome: 'Fachada e sinalização', desc: 'Projeto visual da fachada com simulação', valor: 1100, tipo: 'unico' }
+        { nome: 'Uniformes e brindes', desc: 'Camisetas, bonés, canecas e embalagens com a marca', valor: 600, tipo: 'unico' },
+        { nome: 'Apresentação institucional', desc: 'Modelo de slides no padrão da marca', valor: 1200, tipo: 'unico' }
       ],
       incluso: [
-        'Pesquisa de mercado e concorrentes',
-        'Até 2 conceitos de marca para escolher',
-        'Até 2 rodadas de ajustes no conceito escolhido',
+        'Breve pesquisa de concorrentes e de tendências do seu segmento',
+        'Até 2 rodadas de ajustes na marca',
         'Manual da marca em PDF',
         'Arquivos finais em vetor e imagem',
         'Aplicações listadas na proposta'
@@ -196,11 +204,11 @@ WD.CONFIG_PADRAO = {
         'Registro da marca no INPI e taxas oficiais',
         'Impressão de materiais (cartões, papelaria, fachada)',
         'Produção de fotos e vídeos',
-        'Novos conceitos depois da escolha, se não forem contratados à parte'
+        'Nova proposta de marca depois da aprovação, se não for contratada à parte'
       ],
       condicoes: [
         { titulo: 'Início e prazo', texto: 'O projeto começa depois da assinatura e do pagamento da entrada. Enquanto aguardamos o briefing ou as aprovações, o prazo fica pausado e retomamos assim que recebermos o retorno.' },
-        { titulo: 'Conceitos e ajustes', texto: 'Apresentamos {conceitos} conceitos de marca. Depois que você escolher um, fazemos até {rodadas} rodadas de ajustes. Um conceito totalmente novo ou ajustes além disso custam R$ {hora} por hora, sempre com estimativa aprovada antes.' },
+        { titulo: 'Ajustes', texto: 'Depois que apresentarmos a sua nova marca, fazemos até {rodadas} rodadas de ajustes. Uma marca totalmente nova ou ajustes além disso custam R$ {hora} por hora, sempre com estimativa aprovada antes.' },
         { titulo: 'Registro da marca', texto: 'Fazemos uma busca prévia de marcas parecidas, mas a disponibilidade para registro só é garantida pelo INPI. Recomendamos fazer o pedido logo após a aprovação.' },
         { titulo: 'Propriedade', texto: 'Após a quitação, a marca e todos os arquivos são seus, com cessão total dos direitos de uso.' },
         { titulo: 'Validade da proposta', texto: 'Esta proposta vale por {validade} dias, até {validoAte}.' }
@@ -302,7 +310,6 @@ WD.novoOrcamentoIdentidade = function (cfg) {
       { icone: 'target', titulo: 'Transmitir valor', texto: 'Um visual que comunica a qualidade e o posicionamento do seu negócio.' },
       { icone: 'layers', titulo: 'Consistência em tudo', texto: 'Regras claras para usar a marca no digital, no impresso e na fachada.' }
     ],
-    conceitos: m.conceitos || 2,
     rodadas: m.rodadas || 2,
     suporteDias: cfg.suporteDias,
     horaTecnica: cfg.horaTecnica,
@@ -311,9 +318,8 @@ WD.novoOrcamentoIdentidade = function (cfg) {
     formatos: (m.formatos || []).slice(),
     etapas: [
       { nome: 'Imersão', desc: 'Briefing, público e concorrentes', barra: 'Briefing', inicio: 1, duracao: 1, tipo: 'normal' },
-      { nome: 'Criação', desc: 'Pesquisa visual e esboços', barra: 'Conceitos', inicio: 2, duracao: 2, tipo: 'normal' },
-      { nome: 'Apresentação dos conceitos', desc: 'Você escolhe o caminho da marca', barra: 'Escolha', inicio: 4, duracao: 1, tipo: 'aprovacao' },
-      { nome: 'Refinamento', desc: 'Até 2 rodadas de ajustes', barra: 'Ajustes', inicio: 4, duracao: 2, tipo: 'normal' },
+      { nome: 'Criação', desc: 'Pesquisa de tendências e criação da marca', barra: 'Criação', inicio: 2, duracao: 2, tipo: 'normal' },
+      { nome: 'Ajustes', desc: 'Até 2 rodadas de ajustes', barra: 'Ajustes', inicio: 4, duracao: 1, tipo: 'aprovacao' },
       { nome: 'Manual e aplicações', desc: 'Regras de uso e peças da marca', barra: 'Manual', inicio: 5, duracao: 1, tipo: 'normal' },
       { nome: 'Entrega', desc: 'Arquivos finais organizados', barra: 'Entrega', inicio: 6, duracao: 1, tipo: 'final' }
     ],

@@ -503,3 +503,6 @@ html{accent-color:var(--verde);caret-color:var(--verde)}
   .aplic{break-inside:avoid}
 }
 :root[data-impressao="pb"] .entrega{background:#fff}
+
+/* Selo de destaque nos opcionais ("Em alta") */
+.opcao b .selo--alta{margin-left:6px;padding:4px 7px;font-size:11px;letter-spacing:.3px;text-transform:uppercase;vertical-align:2px}

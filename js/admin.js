@@ -178,7 +178,6 @@
   const tagTipo = t => `<span class="tipo-tag t--${esc(t || 'website')}"><i aria-hidden="true"></i>${esc(WD.nomeTipo(t))}</span>`;
   function escopoIdentidade(tc) {
     return { id: 'escopo', titulo: 'Escopo', desc: 'Entregáveis, aplicações e arquivos', campos: [
-      F('conceitos', 'Conceitos apresentados', 'numero', { w: 'm2', dica: 'Aparece no resumo.' }),
       F('rodadas', 'Rodadas de ajustes', 'numero', { w: 'm2' }),
       F('horaTecnica', 'Hora técnica', 'dinheiro', { w: 'm2' }),
       F('entregaveis', 'O que vamos entregar', 'lista', { campos: [F('icone', 'Ícone', 'icone', { w: 'm2' }), F('titulo', 'Título', 'text', { w: 'm4' }), F('texto', 'Texto', 'textarea', { rows: 2 })], novo: () => clone({ icone: 'pen', titulo: '', texto: '' }), resumo: (x, i) => x.titulo || `Entregável ${i + 1}`, catalogo: () => (cfg.modelos.identidade.entregaveis || []), novoRotulo: 'Adicionar entregável' }),
@@ -227,7 +226,7 @@
         F('pagamento', '', 'pagamentos'),
         F('pagamentoPadrao', 'Forma que já vem marcada', 'select', { opcoes: { avista: 'À vista no Pix', parcelado: 'Entrada + parcelas', cartao: 'Cartão de crédito' } }),
         F('', 'Serviços opcionais', 'subtitulo'),
-        F('opcionais', '', 'lista', { campos: [F('nome', 'Nome', 'text', { w: 'm4' }), F('valor', 'Valor', 'dinheiro', { w: 'm2' }), F('desc', 'Descrição', 'text'), F('tipo', 'Cobrança', 'select', { w: 'm3', opcoes: { unico: 'Valor único', mensal: 'Mensal' } }), F('marcado', 'Já vem marcado', 'check', { w: 'm3' })], novo: () => ({ nome: '', desc: '', valor: 0, tipo: 'unico', marcado: false }), resumo: (x, i) => `${x.nome || 'Opcional ' + (i + 1)} · R$ ${brl(x.valor, false)}${x.tipo === 'mensal' ? '/mês' : ''}`, catalogo: () => tc.opcionais.map(o => ({ ...o, marcado: false })), novoRotulo: 'Adicionar opcional' })
+        F('opcionais', '', 'lista', { campos: [F('nome', 'Nome', 'text', { w: 'm4' }), F('valor', 'Valor', 'dinheiro', { w: 'm2' }), F('desc', 'Descrição', 'text'), F('tipo', 'Cobrança', 'select', { w: 'm2', opcoes: { unico: 'Valor único', mensal: 'Mensal' } }), F('selo', 'Selo de destaque', 'text', { w: 'm2', ph: 'Ex.: Em alta' }), F('marcado', 'Já vem marcado', 'check', { w: 'm2' })], novo: () => ({ nome: '', desc: '', valor: 0, tipo: 'unico', marcado: false }), resumo: (x, i) => `${x.nome || 'Opcional ' + (i + 1)} · R$ ${brl(x.valor, false)}${x.tipo === 'mensal' ? '/mês' : ''}`, catalogo: () => tc.opcionais.map(o => ({ ...o, marcado: false })), novoRotulo: 'Adicionar opcional' })
       ] },
       { id: 'incluso', titulo: 'Incluso e não incluso', campos: [
         F('incluso', 'Incluso no projeto', 'linhas', { rows: 6 }),
@@ -238,7 +237,7 @@
         F('depoimentos', 'Depoimentos', 'escolha', { opcoes: () => cfg.depoimentos.map(d => [d.id, `${d.nome} · ${d.empresa}`]) })
       ] },
       { id: 'condicoes', titulo: 'Condições gerais', desc: 'Prazos, ajustes e validade', campos: [
-        F('condicoes', '', 'lista', { dica: ident ? 'Atalhos no texto: {conceitos}, {rodadas}, {hora} valor da hora, {validade} dias, {validoAte} data final.' : 'Atalhos no texto: {suporte} dias de suporte, {hora} valor da hora, {validade} dias, {validoAte} data final.', campos: [F('titulo', 'Título', 'text'), F('texto', 'Texto', 'textarea', { rows: 3 })], novo: () => ({ titulo: '', texto: '' }), resumo: (x, i) => x.titulo || `Condição ${i + 1}`, catalogo: () => tc.condicoes })
+        F('condicoes', '', 'lista', { dica: ident ? 'Atalhos no texto: {rodadas}, {hora} valor da hora, {validade} dias, {validoAte} data final.' : 'Atalhos no texto: {suporte} dias de suporte, {hora} valor da hora, {validade} dias, {validoAte} data final.', campos: [F('titulo', 'Título', 'text'), F('texto', 'Texto', 'textarea', { rows: 3 })], novo: () => ({ titulo: '', texto: '' }), resumo: (x, i) => x.titulo || `Condição ${i + 1}`, catalogo: () => tc.condicoes })
       ] },
       { id: 'interno', titulo: 'Interno', desc: 'Comissão e anotações. Não aparece para o cliente', campos: [
         F('interno.comissaoPara', 'Comissão para', 'text', { w: 'm4', ph: 'Ex.: Flip Estratégia' }),
@@ -261,7 +260,7 @@
     return [
       { id: 'id-padroes', titulo: 'Valores padrão', desc: 'Usados em toda proposta nova de identidade visual', campos: [
         F(b + 'descricaoBase', 'Descrição do projeto', 'text', { w: 'm4' }), F(b + 'valorBase', 'Valor', 'dinheiro', { w: 'm2' }),
-        F(b + 'conceitos', 'Conceitos apresentados', 'numero', { w: 'm2' }), F(b + 'rodadas', 'Rodadas de ajustes', 'numero', { w: 'm2' }),
+        F(b + 'rodadas', 'Rodadas de ajustes', 'numero', { w: 'm2' }),
         F(b + 'imagemCapa', 'Imagem da capa (mockup)', 'imagem', { dica: 'Aparece ao lado do título na primeira página. Vertical, de preferência 1100 × 1366 px, com fundo escuro.' })
       ] },
       { id: 'id-diferenciais', titulo: 'Diferenciais', desc: 'Bloco "Quem somos" nesta proposta', campos: [
@@ -273,11 +272,11 @@
         F(b + 'formatos', 'Formatos dos arquivos', 'csv')
       ] },
       { id: 'id-opcionais', titulo: 'Catálogo de opcionais', desc: 'Serviços extras desta proposta', campos: [
-        F(b + 'opcionais', '', 'lista', { campos: [F('nome', 'Nome', 'text', { w: 'm4' }), F('valor', 'Valor', 'dinheiro', { w: 'm2' }), F('desc', 'Descrição', 'text', { w: 'm4' }), F('tipo', 'Cobrança', 'select', { w: 'm2', opcoes: { unico: 'Valor único', mensal: 'Mensal' } })], novo: () => ({ nome: '', desc: '', valor: 0, tipo: 'unico' }), resumo: (x, i) => `${x.nome || 'Opcional ' + (i + 1)} · R$ ${brl(x.valor, false)}${x.tipo === 'mensal' ? '/mês' : ''}` })
+        F(b + 'opcionais', '', 'lista', { campos: [F('nome', 'Nome', 'text', { w: 'm4' }), F('valor', 'Valor', 'dinheiro', { w: 'm2' }), F('desc', 'Descrição', 'text', { w: 'm4' }), F('tipo', 'Cobrança', 'select', { w: 'm2', opcoes: { unico: 'Valor único', mensal: 'Mensal' } }), F('selo', 'Selo de destaque', 'text', { w: 'm2', ph: 'Ex.: Em alta', dica: 'Destaca o item na proposta. Deixe vazio para não mostrar.' })], novo: () => ({ nome: '', desc: '', valor: 0, tipo: 'unico', selo: '' }), resumo: (x, i) => `${x.nome || 'Opcional ' + (i + 1)} · R$ ${brl(x.valor, false)}${x.tipo === 'mensal' ? '/mês' : ''}` })
       ] },
       { id: 'id-incluso', titulo: 'Incluso e não incluso', campos: [F(b + 'incluso', 'Incluso', 'linhas', { rows: 6 }), F(b + 'naoIncluso', 'Não incluso', 'linhas', { rows: 4 })] },
       { id: 'id-condicoes', titulo: 'Condições gerais', desc: 'Texto padrão das condições', campos: [
-        F(b + 'condicoes', '', 'lista', { dica: 'Atalhos: {conceitos}, {rodadas}, {hora}, {validade}, {validoAte}.', campos: [F('titulo', 'Título', 'text'), F('texto', 'Texto', 'textarea', { rows: 3 })], novo: () => ({ titulo: '', texto: '' }), resumo: (x, i) => x.titulo || `Condição ${i + 1}` })
+        F(b + 'condicoes', '', 'lista', { dica: 'Atalhos: {rodadas}, {hora}, {validade}, {validoAte}.', campos: [F('titulo', 'Título', 'text'), F('texto', 'Texto', 'textarea', { rows: 3 })], novo: () => ({ titulo: '', texto: '' }), resumo: (x, i) => x.titulo || `Condição ${i + 1}` })
       ] },
       { id: 'id-mensagens', titulo: 'Mensagens de envio', desc: 'WhatsApp e e-mail desta proposta', campos: [
         F(b + 'mensagens.whatsapp', 'Mensagem do WhatsApp', 'textarea', { rows: 5, dica: 'Atalhos: {contato}, {empresa}, {numero}, {link}.' }),
@@ -320,7 +319,7 @@
         F('funcionalidades', '', 'lista', { campos: [F('icone', 'Ícone', 'icone', { w: 'm2' }), F('titulo', 'Título', 'text', { w: 'm4' }), F('texto', 'Texto', 'text')], novo: () => ({ icone: 'code', titulo: '', texto: '' }), resumo: (x, i) => x.titulo || `Funcionalidade ${i + 1}` })
       ] },
       { id: 'opcionais', titulo: 'Catálogo de opcionais', desc: 'Serviços extras e mensalidades', campos: [
-        F('opcionais', '', 'lista', { campos: [F('nome', 'Nome', 'text', { w: 'm4' }), F('valor', 'Valor', 'dinheiro', { w: 'm2' }), F('desc', 'Descrição', 'text', { w: 'm4' }), F('tipo', 'Cobrança', 'select', { w: 'm2', opcoes: { unico: 'Valor único', mensal: 'Mensal' } })], novo: () => ({ nome: '', desc: '', valor: 0, tipo: 'unico' }), resumo: (x, i) => `${x.nome || 'Opcional ' + (i + 1)} · R$ ${brl(x.valor, false)}${x.tipo === 'mensal' ? '/mês' : ''}` })
+        F('opcionais', '', 'lista', { campos: [F('nome', 'Nome', 'text', { w: 'm4' }), F('valor', 'Valor', 'dinheiro', { w: 'm2' }), F('desc', 'Descrição', 'text', { w: 'm4' }), F('tipo', 'Cobrança', 'select', { w: 'm2', opcoes: { unico: 'Valor único', mensal: 'Mensal' } }), F('selo', 'Selo de destaque', 'text', { w: 'm2', ph: 'Ex.: Em alta', dica: 'Destaca o item na proposta. Deixe vazio para não mostrar.' })], novo: () => ({ nome: '', desc: '', valor: 0, tipo: 'unico', selo: '' }), resumo: (x, i) => `${x.nome || 'Opcional ' + (i + 1)} · R$ ${brl(x.valor, false)}${x.tipo === 'mensal' ? '/mês' : ''}` })
       ] },
       { id: 'incluso', titulo: 'Incluso e não incluso', campos: [F('incluso', 'Incluso', 'linhas', { rows: 6 }), F('naoIncluso', 'Não incluso', 'linhas', { rows: 4 })] },
       { id: 'condicoes', titulo: 'Condições gerais', desc: 'Texto padrão das condições', campos: [
