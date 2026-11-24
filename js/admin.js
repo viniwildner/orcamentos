@@ -9,7 +9,7 @@
   const dlg = $('#dialogo');
   $('#sprite').innerHTML = WD.SPRITE;
 
-  const STATUS = { rascunho: 'Rascunho', enviado: 'Enviado', visualizado: 'Visualizado', aprovado: 'Aprovado', recusado: 'Recusado' };
+  const STATUS = { rascunho: 'Rascunho', enviado: 'Enviado', visualizado: 'Visualizado', aprovado: 'Aprovado', recusado: 'Recusado', semresposta: 'Sem resposta' };
   const TIPOS_ETAPA = { normal: 'Etapa normal', aprovacao: 'Aprovação do cliente', final: 'Publicação' };
   const ICONES = Object.entries(WD.ICONES);
 
@@ -17,7 +17,8 @@
   let lista = [], lixeira = [], todos = [];
   async function carregarLista() {
     todos = await WD.store.listar();
-    todos.sort((a, b) => String(b.atualizado_em).localeCompare(String(a.atualizado_em)));
+    const quandoOrd = x => x.importado ? (x.data || '') + 'T12:00:00' : String(x.atualizado_em || '');
+    todos.sort((a, b) => quandoOrd(b).localeCompare(quandoOrd(a)));
     lista = todos.filter(x => !x.excluidoEm);
     lixeira = todos.filter(x => x.excluidoEm).sort((a, b) => String(b.excluidoEm).localeCompare(String(a.excluidoEm)));
   }
@@ -378,6 +379,7 @@
   function filaPendencias() {
     const f = [];
     lista.forEach(x => {
+      if (x.importado) return;
       if (x.pedidoEm && x.status !== 'aprovado') f.push({ x, p: 0, tipo: 'pedido', txt: `Pediu aprovação ${ha(x.pedidoEm)}` });
       else if (x.status === 'visualizado' && diasDesde(x.dataStatus) >= 3) f.push({ x, p: 1, tipo: 'cobrar', txt: `Viu a proposta ${ha(x.dataStatus)} e não respondeu` });
       else if (x.status === 'enviado' && diasDesde(x.dataStatus) >= 5) f.push({ x, p: 2, tipo: 'cobrar', txt: `Recebeu ${ha(x.dataStatus)} e ainda não abriu` });
@@ -420,23 +422,26 @@
         <i class="b f--aprovado" style="height:${m.apr / max * 100}%" title="Aprovado em ${m.nome}: R$ ${brl(m.apr, false)} (${m.nA}), comissão R$ ${brl(m.com, false)}">${m.apr ? `<em>${k(m.apr)}</em>` : ''}${m.com ? `<s class="f--comissao" style="height:${m.com / m.apr * 100}%"></s>` : ''}</i>
       </div><span>${m.nome}</span></div>`).join('')}</div>`;
   }
-  let filtro = 'todos', busca = '', filtroTipo = 'todos';
+  let filtro = 'todos', busca = '', filtroTipo = 'todos', soImp = false;
   async function telaLista() {
     marcarNav('lista');
     tela.innerHTML = `<div class="pagina"><p style="color:var(--texto-3)">Carregando…</p></div>`;
     try { await carregarLista(); } catch (e) { return erro(e); }
     const soma = (arr, k) => arr.reduce((n, x) => n + Number(x[k || 'valor'] || 0), 0);
-    const abertos = lista.filter(x => x.status === 'enviado' || x.status === 'visualizado');
-    const aprov = lista.filter(x => x.status === 'aprovado');
-    const decididos = lista.filter(x => x.status === 'aprovado' || x.status === 'recusado').length;
+    const novos = lista.filter(x => !x.importado);
+    const nImp = lista.length - novos.length;
+    const abertos = novos.filter(x => x.status === 'enviado' || x.status === 'visualizado');
+    const aprov = novos.filter(x => x.status === 'aprovado');
+    const decididos = novos.filter(x => x.status === 'aprovado' || x.status === 'recusado').length;
     const taxa = decididos ? Math.round(aprov.length / decididos * 100) + '%' : '—';
-    const funil = ['enviado', 'visualizado', 'aprovado', 'recusado'].map(s => [s, soma(lista.filter(x => x.status === s))]);
+    const funil = ['enviado', 'visualizado', 'aprovado', 'recusado'].map(s => [s, soma(novos.filter(x => x.status === s))]);
     const totalFunil = funil.reduce((n, [, v]) => n + v, 0);
-    const conta = s => s === 'todos' ? lista.length : lista.filter(x => x.status === s).length;
+    const vis = lista.filter(x => soImp ? x.importado : !x.importado);
+    const conta = s => s === 'todos' ? vis.length : vis.filter(x => x.status === s).length;
     const comAprov = soma(aprov, 'comissao'), comAbertos = soma(abertos, 'comissao');
     const entregas = aprov.filter(x => x.entrega).sort((a, b) => a.entrega.localeCompare(b.entrega));
-    const semDados = lista.every(x => x.status === 'rascunho');
-    const tiposUsados = Object.keys(WD.TIPOS).filter(t => lista.some(x => (x.tipo || 'website') === t));
+    const semDados = novos.every(x => x.status === 'rascunho') && !nImp;
+    const tiposUsados = Object.keys(WD.TIPOS).filter(t => vis.some(x => (x.tipo || 'website') === t));
     if (!tiposUsados.includes(filtroTipo)) filtroTipo = 'todos';
     tela.innerHTML = `<div class="pagina">
       <div class="cab-pag"><div><p class="sobretitulo">${saudacao()}, ${esc((cfg.empresa.responsavel || '').split(' ')[0] || 'Marcus')}</p><h1>Orçamentos</h1></div>
@@ -455,7 +460,8 @@
         <ul class="legenda">${funil.filter(([, v]) => v).map(([s, v]) => `<li><i class="f--${s}"></i>${STATUS[s]} <b class="num">R$ ${brl(v, false)}</b></li>`).join('')}</ul>` : ''}
       </section>`}
       <div class="filtros-linha"><div class="filtros">${['todos', ...Object.keys(STATUS)].filter(s => s === 'todos' || s === filtro || conta(s) > 0).map(s => `<button class="chip${filtro === s ? ' on' : ''}" data-filtro="${s}">${s === 'todos' ? 'Todos' : STATUS[s]}<span class="num">${conta(s)}</span></button>`).join('')}
-        ${tiposUsados.length > 1 ? `<span class="filtros-sep" aria-hidden="true"></span>${tiposUsados.map(t => `<button class="chip chip--tipo t--${t}${filtroTipo === t ? ' on' : ''}" data-filtro-tipo="${t}" aria-pressed="${filtroTipo === t}">${tagTipo(t)}<span class="num">${lista.filter(x => (x.tipo || 'website') === t).length}</span></button>`).join('')}` : ''}
+        ${tiposUsados.length > 1 ? `<span class="filtros-sep" aria-hidden="true"></span>${tiposUsados.map(t => `<button class="chip chip--tipo t--${t}${filtroTipo === t ? ' on' : ''}" data-filtro-tipo="${t}" aria-pressed="${filtroTipo === t}">${tagTipo(t)}<span class="num">${vis.filter(x => (x.tipo || 'website') === t).length}</span></button>`).join('')}` : ''}
+        ${nImp ? `<span class="filtros-sep" aria-hidden="true"></span><button class="chip chip--imp${soImp ? ' on' : ''}" data-filtro-imp aria-pressed="${soImp}">${ic('folder')}Importados<span class="num">${nImp}</span></button>` : ''}
         </div><input class="busca" type="search" placeholder="Buscar cliente ou número" aria-label="Buscar cliente ou número" value="${esc(busca)}" id="busca"></div>
       <div class="lista" id="lista"></div>
       ${semDados ? '' : `<div class="painel-duplo">
@@ -465,9 +471,11 @@
         </section>
       </div>`}
       <div class="rodape-lista"><a class="link-lixeira" href="#/lixeira">${ic('trash')}Lixeira<span class="num">${lixeira.length}</span></a>
-        <p>Orçamentos do sistema anterior: <a href="antigo.html">abrir sistema antigo</a>.</p></div></div>`;
+        <p>Orçamentos do sistema anterior: <a href="antigo.html">abrir sistema antigo</a> · <button type="button" class="link-btn" id="importar">${ic('folder')}Importar orçamentos antigos</button></p></div></div>`;
     desenharLista();
     $('#novo').onclick = escolherTipo;
+    $('#importar').onclick = abrirImportar;
+    const bImp = $('[data-filtro-imp]'); if (bImp) bImp.onclick = () => { soImp = !soImp; filtro = 'todos'; filtroTipo = 'todos'; telaLista(); };
     $$('[data-filtro]').forEach(b => b.onclick = () => { filtro = b.dataset.filtro; $$('[data-filtro]').forEach(x => x.classList.toggle('on', x === b)); desenharLista(); });
     $('#busca').oninput = e => { busca = e.target.value; desenharLista(); };
     $$('[data-filtro-tipo]').forEach(b => b.onclick = () => { filtroTipo = filtroTipo === b.dataset.filtroTipo ? 'todos' : b.dataset.filtroTipo; $$('[data-filtro-tipo]').forEach(x => { const on = x.dataset.filtroTipo === filtroTipo; x.classList.toggle('on', on); x.setAttribute('aria-pressed', on); }); desenharLista(); });
@@ -475,21 +483,21 @@
 
   function desenharLista() {
     const q = busca.trim().toLowerCase();
-    const itens = lista.filter(x => (filtro === 'todos' || x.status === filtro) && (filtroTipo === 'todos' || (x.tipo || 'website') === filtroTipo) && (!q || `${x.cliente} ${x.contato} ${x.numero}`.toLowerCase().includes(q)));
+    const itens = lista.filter(x => (q ? true : soImp ? x.importado : !x.importado) && (filtro === 'todos' || x.status === filtro) && (filtroTipo === 'todos' || (x.tipo || 'website') === filtroTipo) && (!q || `${x.cliente} ${x.contato} ${x.numero}`.toLowerCase().includes(q)));
     const el = $('#lista');
     if (!lista.length) { el.innerHTML = `<div class="vazio"><h2>Nenhum orçamento ainda</h2><p>Crie o primeiro. Ele já vem preenchido com os seus padrões.</p><p style="margin-top:16px"><button class="btn btn--p" onclick="document.getElementById('novo').click()">${ic('plus')}Novo orçamento</button></p></div>`; return; }
-    if (!itens.length) { el.innerHTML = `<div class="vazio">Nada encontrado com esse filtro.<p style="margin-top:12px"><button class="btn btn--sm btn--g" id="limpar-filtros">Limpar filtros</button></p></div>`; $('#limpar-filtros').onclick = () => { filtro = 'todos'; filtroTipo = 'todos'; busca = ''; telaLista(); }; return; }
+    if (!itens.length) { el.innerHTML = `<div class="vazio">Nada encontrado com esse filtro.<p style="margin-top:12px"><button class="btn btn--sm btn--g" id="limpar-filtros">Limpar filtros</button></p></div>`; $('#limpar-filtros').onclick = () => { filtro = 'todos'; filtroTipo = 'todos'; busca = ''; soImp = false; telaLista(); }; return; }
     el.innerHTML = `<div class="linha-o cab"><span>Cliente</span><span class="col-num">Nº</span><span class="col-status">Status</span><span class="col-valor">Valor</span><span class="col-data">Entrega</span><span class="col-acts">Ações</span></div>` +
       itens.map(x => `<div class="linha-o" data-id="${x.id}">
-        <span class="cli"><i class="av t--${esc(x.tipo || 'website')}" aria-hidden="true">${esc(iniciais(x.cliente))}</i><span><b><a class="linha-link" href="#/o/${x.id}">${esc(x.cliente || 'Sem nome')}</a></b><span>${tagTipo(x.tipo)}${x.contato ? `<span class="cli-contato"> · ${esc(x.contato)}</span>` : ''}</span></span></span>
+        <span class="cli"><i class="av t--${esc(x.tipo || 'website')}" aria-hidden="true">${esc(iniciais(x.cliente))}</i><span><b><a class="linha-link" href="#/o/${x.id}">${esc(x.cliente || 'Sem nome')}</a></b><span>${tagTipo(x.tipo)}${x.importado ? `<span class="tag-imp">Importado</span>` : ''}${x.contato ? `<span class="cli-contato"> · ${esc(x.contato)}</span>` : ''}</span></span></span>
         <span class="col-num num">${esc(x.numero || '—')}</span>
-        <span class="col-status"><span class="status status--${x.status}">${STATUS[x.status] || x.status}</span>${x.pedidoEm && x.status !== 'aprovado' ? `<small class="pediu">${ic('flag')}Pediu aprovação</small>` : `<small class="num" title="${x.dataStatus ? esc(new Date(x.dataStatus).toLocaleString('pt-BR')) : ''}">${x.dataStatus ? ha(x.dataStatus) : ''}</small>`}</span>
+        <span class="col-status"><span class="status status--${x.status}">${STATUS[x.status] || x.status}</span>${x.pedidoEm && x.status !== 'aprovado' ? `<small class="pediu">${ic('flag')}Pediu aprovação</small>` : `<small class="num" title="${x.dataStatus ? esc(new Date(x.dataStatus).toLocaleString('pt-BR')) : ''}">${x.importado ? fmtData(x.data) : x.dataStatus ? ha(x.dataStatus) : ''}</small>`}</span>
         <span class="col-valor num">R$ ${brl(x.valor, false)}${x.comissao ? `<small title="Comissão${x.comissaoPara ? ' para ' + esc(x.comissaoPara) : ''}">com. R$ ${brl(x.comissao, false)}</small>` : ''}</span>
-        <span class="col-data">${x.entrega ? (() => { const n = WD.diasAte(x.entrega); return `<b class="num${n < 0 ? ' atraso' : n <= 7 ? ' perto' : ''}">${fmtData(x.entrega)}</b><small>${faltam(x.entrega)}</small>`; })() : `<small>${x.status === 'aprovado' || x.status === 'recusado' ? '—' : 'após aprovar'}</small>`}</span>
-        <span class="acts">
+        <span class="col-data">${x.entrega ? (() => { const n = WD.diasAte(x.entrega); return `<b class="num${n < 0 ? ' atraso' : n <= 7 ? ' perto' : ''}">${fmtData(x.entrega)}</b><small>${faltam(x.entrega)}</small>`; })() : `<small>${x.importado || x.status === 'aprovado' || x.status === 'recusado' ? '—' : 'após aprovar'}</small>`}</span>
+        <span class="acts">${x.importado ? `${x.pdf ? `<a class="icone-btn" href="${esc(x.pdf)}" target="_blank" rel="noopener" title="Abrir PDF original" aria-label="Abrir PDF original">${ic('external')}</a>` : ''}` : `
           <button class="icone-btn" title="Enviar no WhatsApp" aria-label="Enviar no WhatsApp" data-acao-l="whats" data-id-l="${x.id}">${ic('whatsapp')}</button>
           <button class="icone-btn" title="Enviar por e-mail" aria-label="Enviar por e-mail" data-acao-l="email" data-id-l="${x.id}">${ic('mail')}</button>
-          <button class="icone-btn" title="Baixar PDF" aria-label="Baixar PDF" data-acao-l="pdf" data-id-l="${x.id}">${ic('download')}</button>
+          <button class="icone-btn" title="Baixar PDF" aria-label="Baixar PDF" data-acao-l="pdf" data-id-l="${x.id}">${ic('download')}</button>`}
           <span class="acts-sep" aria-hidden="true"></span>
           <button class="icone-btn" title="Mais ações" aria-label="Mais ações" aria-haspopup="menu" data-mais="${x.id}">${ic('more')}</button></span></div>`).join('');
     $$('[data-acao-l]', el).forEach(b => b.onclick = () => acaoLista(b.dataset.idL, b.dataset.acaoL, b));
@@ -526,7 +534,8 @@
   function menuMais(botao, id) {
     document.querySelectorAll('.menu-pdf').forEach(m => m.remove());
     const m = document.createElement('div'); m.className = 'menu-pdf menu-mais'; m.setAttribute('role', 'menu');
-    m.innerHTML = `<button type="button" role="menuitem" data-m="dup">${ic('copy')}<span>Duplicar<small>Cria um rascunho com o mesmo conteúdo</small></span></button>` +
+    const imp = (lista.find(l => l.id === id) || {}).importado;
+    m.innerHTML = (imp ? '' : `<button type="button" role="menuitem" data-m="dup">${ic('copy')}<span>Duplicar<small>Cria um rascunho com o mesmo conteúdo</small></span></button>`) +
       `<button type="button" role="menuitem" data-m="del" class="perigo">${ic('trash')}<span>Excluir<small>Vai para a lixeira, dá para restaurar</small></span></button>`;
     document.body.appendChild(m);
     const r = botao.getBoundingClientRect(); const acima = r.bottom + m.offsetHeight + 12 > innerHeight;
@@ -622,6 +631,7 @@
     }
     if (!todos.length) { try { await carregarLista(); } catch (e) { /* segue */ } }
     sujo = false;
+    if (atual.importado) return fichaImportado();
     tela.innerHTML = `<div class="editor" id="editor">
       <section class="form" aria-label="Formulário">
         <div class="form-topo">
@@ -857,6 +867,91 @@
       if (!confirm('Voltar todas as configurações para o padrão original? Os orçamentos já criados não mudam.')) return;
       Object.keys(rascunho).forEach(k => delete rascunho[k]); Object.assign(rascunho, clone(WD.CONFIG_PADRAO)); await salvar(); desenhar(); toast('Padrões restaurados');
     };
+  }
+
+  /* ---------- Orçamentos antigos (importados dos PDFs) ---------- */
+  const ST_IMP = ['aprovado', 'recusado', 'semresposta'];
+  function fichaImportado() {
+    const o = atual, im = o.importado || {};
+    const linha = (rot, v) => v ? `<div class="fi-l"><dt>${rot}</dt><dd>${v}</dd></div>` : '';
+    tela.innerHTML = `<div class="pagina pagina--estreita">
+      <div class="cab-pag"><div><p class="sobretitulo"><a href="#/" class="voltar-lista">${ic('back')}Orçamentos</a></p>
+        <h1>${esc(o.cliente.empresa || 'Sem nome')}</h1>
+        <p class="cab-lead">${tagTipo(o.tipo)}<span class="tag-imp">Importado</span> Orçamento ${esc(o.numero || '')} de ${fmtData(o.data)}, feito antes deste sistema. Ele fica no histórico e não é enviado para o cliente.</p></div>
+        <div class="acoes">${im.pdf ? `<a class="btn btn--p" href="${esc(im.pdf)}" target="_blank" rel="noopener">${ic('external')}Abrir PDF original</a>` : ''}</div></div>
+      <section class="painel-num ficha-imp">
+        <div class="fi-topo"><label class="fi-st"><span>Status</span><select id="imp-status" class="sel-status" data-s="${o.status}">${ST_IMP.map(k => `<option value="${k}"${o.status === k ? ' selected' : ''}>${STATUS[k]}</option>`).join('')}</select></label>
+          <div class="fi-valor"><span>Valor</span><b class="num">R$ ${brl(im.valor || 0, false)}</b></div></div>
+        <dl class="fi">
+          ${linha('Contato', esc(o.cliente.contato || ''))}
+          ${linha('Cidade', esc(im.cidade || ''))}
+          ${linha('Serviço', esc(im.servico || ''))}
+          ${(im.itens || []).length ? linha('Itens', `<ul class="fi-itens">${im.itens.map(i => `<li><span>${esc(i.nome)}${i.extra ? ` <small>${esc(i.extra)}</small>` : ''}</span><b class="num">${i.valor != null ? 'R$ ' + brl(i.valor, false) : ''}</b></li>`).join('')}</ul>`) : ''}
+          ${linha('Prazo', esc(im.prazo || ''))}
+          ${linha('Pagamento', esc(im.pagamento || ''))}
+          ${linha('Descrição', im.descricao ? `<p class="fi-desc">${esc(im.descricao)}</p>` : '')}
+        </dl>
+      </section>
+      <p class="rodape-lista"><button type="button" class="link-btn perigo" id="imp-excluir">${ic('trash')}Excluir este orçamento</button></p></div>`;
+    $('#imp-status').onchange = async e => {
+      const s = e.target.value; e.target.dataset.s = s; o.status = s;
+      o.historico = (o.historico || []).filter(h => !ST_IMP.includes(h.status)).concat([{ status: s, em: (o.data || '') + 'T12:00:00', por: 'voce' }]);
+      try { atual = await WD.store.salvar(o); toast(`Status: ${STATUS[s]}`); } catch (er) { erro(er); }
+    };
+    $('#imp-excluir').onclick = async () => { const id = o.id; atual = null; location.hash = '#/'; await rotaPronta(); excluir(id); };
+  }
+  const rotaPronta = () => new Promise(r => setTimeout(r, 400));
+
+  /* Lê o arquivo .json gerado da planilha de conferência e grava os orçamentos.
+     Reimportar o mesmo arquivo atualiza (pelo número) em vez de duplicar. */
+  function abrirImportar() {
+    dlg.innerHTML = `<div class="dlg"><h2>Importar orçamentos antigos</h2>
+      <p>Escolha o arquivo <b>.json</b> que eu preparei a partir da planilha de conferência. Eles entram com a marca <b>Importado</b>, não mudam a numeração nova e não aparecem em "Precisa de você".</p>
+      <label class="btn btn--g arquivo-imp">${ic('folder')}Escolher arquivo<input type="file" accept=".json,application/json" id="imp-arq" hidden></label>
+      <div id="imp-info" aria-live="polite"></div>
+      <div class="acoes"><button class="btn btn--g" data-fechar>Cancelar</button><button class="btn btn--p" data-ok disabled>Importar</button></div></div>`;
+    dlg.showModal();
+    const info = $('#imp-info', dlg), ok = $('[data-ok]', dlg);
+    $('[data-fechar]', dlg).onclick = () => dlg.close();
+    let itens = [];
+    $('#imp-arq', dlg).onchange = async e => {
+      const f = e.target.files[0]; if (!f) return;
+      try {
+        const j = JSON.parse(await f.text());
+        itens = (Array.isArray(j) ? j : j.orcamentos || []).filter(x => x && x.numero && x.cliente);
+        if (!itens.length) throw new Error('vazio');
+      } catch (er) { itens = []; ok.disabled = true; info.innerHTML = `<p class="erro-imp">Não consegui ler esse arquivo. Confira se é o .json da importação.</p>`; return; }
+      const ja = new Set(todos.filter(x => x.importado).map(x => x.numero));
+      const nNovos = itens.filter(x => !ja.has(numImp(x))).length;
+      const semSt = itens.filter(x => !ST_IMP.includes(x.status)).length;
+      info.innerHTML = `<p><b class="num">${itens.length}</b> orçamentos no arquivo: <b class="num">${nNovos}</b> novos${itens.length - nNovos ? `, <b class="num">${itens.length - nNovos}</b> já importados (serão atualizados)` : ''}.${semSt ? ` ${semSt} sem status marcado entram como "Sem resposta".` : ''}</p>`;
+      ok.disabled = false;
+    };
+    ok.onclick = async () => {
+      ok.disabled = true;
+      const porNum = new Map(todos.filter(x => x.importado).map(x => [x.numero, x.id]));
+      let n = 0, falhas = 0;
+      for (const x of itens) {
+        try { await WD.store.salvar(montarImportado(x, porNum.get(numImp(x)))); } catch (er) { falhas++; console.error(er); }
+        n++; if (n % 5 === 0 || n === itens.length) info.innerHTML = `<p>Gravando ${n} de ${itens.length}…</p><progress max="${itens.length}" value="${n}"></progress>`;
+      }
+      dlg.close(); soImp = true; await telaLista();
+      toast(falhas ? `${itens.length - falhas} importados, ${falhas} com erro` : `${itens.length} orçamentos importados`, null, null, 4000);
+    };
+  }
+  const numImp = x => `${String(x.numero).replace(/\/.*$/, '')}/${String(x.data || '').slice(0, 4) || 'antigo'}`;
+  function montarImportado(x, id) {
+    const st = ST_IMP.includes(x.status) ? x.status : 'semresposta';
+    const em = (x.data || new Date().toISOString().slice(0, 10)) + 'T12:00:00';
+    const hist = [{ status: 'criado', em, por: 'voce' }, { status: 'enviado', em, por: 'voce' }];
+    hist.push({ status: st, em, por: 'voce' });
+    const o = {
+      origem: 'importado', numero: numImp(x), tipo: WD.TIPOS[x.tipo] ? x.tipo : 'grafico', status: st,
+      data: x.data || '', criadoEm: em, cliente: { empresa: x.cliente || '', contato: x.contato || '' }, historico: hist,
+      importado: { valor: Number(x.valor || 0), servico: x.servico || '', descricao: x.descricao || '', itens: x.itens || [], prazo: x.prazo || '', pagamento: x.pagamento || '', cidade: x.cidade || '', pdf: x.pdf || '', arquivo: x.arquivo || '', importadoEm: new Date().toISOString() }
+    };
+    if (id) o.id = id;
+    return o;
   }
 
   /* ---------- Rotas ---------- */

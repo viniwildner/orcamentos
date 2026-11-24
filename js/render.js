@@ -102,15 +102,17 @@ window.WD = window.WD || {};
   /* Resumo usado na lista e no painel */
   WD.resumoOrc = function (o) {
     const h = WD.historico(o);
-    const com = WD.comissao(o);
+    const imp = o.importado || null;
+    const com = imp ? { valor: 0, para: '', bruto: Number(imp.valor || 0), liquido: Number(imp.valor || 0), mensal: 0 } : WD.comissao(o);
     const st = o.status || 'rascunho';
-    const crono = st === 'aprovado' ? WD.cronograma(o, h) : null;
+    const crono = st === 'aprovado' && !imp ? WD.cronograma(o, h) : null;
     return {
       id: o.id, numero: o.numero, cliente: (o.cliente && o.cliente.empresa) || '', contato: (o.cliente && o.cliente.contato) || '',
       whatsapp: (o.cliente && o.cliente.whatsapp) || '', email: (o.cliente && o.cliente.email) || '',
       status: st, tipo: o.tipo || 'website', valor: com.bruto, comissao: com.valor, comissaoPara: com.para, liquido: com.liquido, mensal: com.mensal,
       historico: h, dataStatus: WD.dataStatus(o, h), entrega: crono && crono.entrega, inicio: crono && crono.inicio,
       excluidoEm: o.excluidoEm || null, pedidoEm: (o.escolha && o.escolha.pedidoEm) || null,
+      importado: !!imp, pdf: (imp && imp.pdf) || '', data: o.data || '',
       atualizado_em: o.atualizadoEm || o.data
     };
   };

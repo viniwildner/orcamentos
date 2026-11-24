@@ -548,3 +548,29 @@ input::placeholder,textarea::placeholder{color:var(--texto-3);opacity:1}
   .filtros-linha .filtros{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
   .filtros-linha .filtros .chip{flex:none}
 }
+
+/* Orçamentos importados dos PDFs antigos */
+.status--semresposta{color:var(--texto-2);background:var(--superficie-2)}
+.f--semresposta{background:var(--borda)}
+.tag-imp{display:inline-flex;align-items:center;margin-left:6px;padding:1px 7px;border-radius:99px;border:1px solid var(--borda);font-size:11px;font-weight:600;color:var(--texto-2);line-height:1.5;vertical-align:middle}
+.link-btn{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:0;border:0;background:none;font:inherit;color:inherit;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.link-btn .i{width:15px;height:15px}
+.link-btn.perigo{color:var(--coral-texto)}
+.arquivo-imp{align-self:flex-start;cursor:pointer}
+.erro-imp{color:var(--coral-texto)!important}
+.dlg progress{width:100%;accent-color:var(--verde)}
+.pagina--estreita{max-width:860px}
+.ficha-imp{display:flex;flex-direction:column;gap:20px}
+.fi-topo{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.fi-st{display:flex;flex-direction:column;gap:6px;font-size:12.5px;color:var(--texto-2)}
+.fi-valor{display:flex;flex-direction:column;align-items:flex-end;gap:2px;font-size:12.5px;color:var(--texto-2)}
+.fi-valor b{font-size:28px;color:var(--texto)}
+.fi{margin:0;display:flex;flex-direction:column;border-top:1px solid var(--borda)}
+.fi-l{display:grid;grid-template-columns:120px minmax(0,1fr);gap:16px;padding:12px 0;border-bottom:1px solid var(--borda)}
+.fi-l dt{font-size:12.5px;color:var(--texto-2);padding-top:2px}
+.fi-l dd{margin:0;font-size:14.5px;line-height:1.5}
+.fi-itens{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.fi-itens li{display:flex;justify-content:space-between;gap:16px}
+.fi-itens small{color:var(--texto-3)}
+.fi-desc{margin:0;white-space:pre-line;color:var(--texto-2);font-size:13.5px}
+@media (max-width:640px){.fi-l{grid-template-columns:minmax(0,1fr);gap:4px}}
